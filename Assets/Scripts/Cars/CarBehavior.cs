@@ -8,7 +8,7 @@ using UnityEngine;
 public class CarBehavior : MonoBehaviour
 {
     [SerializeField]
-    Vector3[] path = null;
+    PathingCell[] path = null;
     const float ARBITRARY_MIN_DISTANCE = 0.35f;
     const float ActualMaxSpeed = 1f;
     [SerializeField] float DriverViewDist = 0;
@@ -30,7 +30,7 @@ public class CarBehavior : MonoBehaviour
         DriverViewDist = detector.size.z;
         absoulteStop = Mathf.Sqrt(DriverViewDist);
     }
-    public void setPath(Vector3[] path, float maxSpeed = ActualMaxSpeed)
+    public void setPath(PathingCell[] path, float maxSpeed = ActualMaxSpeed)
     {
         MaxSpeed = maxSpeed;
         this.path = path;
@@ -129,10 +129,10 @@ public class CarBehavior : MonoBehaviour
         for (int i = 0; i < path.Length; i++)
         {
             debugI = i;
-            while (Vector3.Distance(transform.position, path[i]) > ARBITRARY_MIN_DISTANCE)
+            while (Vector3.Distance(transform.position, path[i].pos) > ARBITRARY_MIN_DISTANCE)
             {
                 //find the vector pointing from our position to the target
-                _direction = (path[i] - transform.position).normalized;
+                _direction = (path[i].pos - transform.position).normalized;
 
                 //create the rotation we need to be in to look at the target
                 _lookRotation = Quaternion.LookRotation(new Vector3(_direction.x, 0, _direction.z));
@@ -141,7 +141,7 @@ public class CarBehavior : MonoBehaviour
                 //thisRigidbody.rotation = Quaternion.Slerp(Quaternion.Euler(0, thisRigidbody.rotation.eulerAngles.y, 0), _lookRotation, Time.deltaTime * RotationSpeed);
                 //thisRigidbody.AddForce(transform.forward*Acceleration,ForceMode.Acceleration);
                 transform.rotation = Quaternion.Lerp(transform.rotation, _lookRotation, t * 2);
-                transform.position = Vector3.Lerp(transform.position, path[i], t);
+                transform.position = Vector3.Lerp(transform.position, path[i].pos, t);
 
 
                 t += currentSpeed * Time.deltaTime;
@@ -166,11 +166,11 @@ public class CarBehavior : MonoBehaviour
         for (int i = 0; i < path.Length; i++)
         {
             debugI = i;
-            while (Vector3.Distance(transform.position, path[i]) > ARBITRARY_MIN_DISTANCE)
+            while (Vector3.Distance(transform.position, path[i].pos) > ARBITRARY_MIN_DISTANCE)
             {
-                Vector3 direction = (path[i] - transform.position).normalized;
+                Vector3 direction = (path[i].pos - transform.position).normalized;
 
-                float currentSpeed = Mathf.Min(maxSpeed, Vector3.Distance(transform.position, path[i]) / 2.0f);
+                float currentSpeed = Mathf.Min(maxSpeed, Vector3.Distance(transform.position, path[i].pos) / 2.0f);
 
                 // Create a force vector in the direction of movement
                 Vector3 force = direction * forceMagnitude;

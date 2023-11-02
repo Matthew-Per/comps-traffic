@@ -49,18 +49,18 @@ public class MakePath : MonoBehaviour
             noDoubleOps = true;
         }
         if(beginning.HasValue && destination.HasValue){
-            Vector3Int[] path = aStar.CompleteCoAstar(beginning.Value,destination.Value);
+            PathingCell[] path = aStar.CompleteCoAstar(beginning.Value,destination.Value);
             if(path != null){
                 beginning=null;
                 destination=null;
-                StartCoroutine(Debug10Cars(MakeRealPath(path)));
+                StartCoroutine(Debug10Cars(path));
                 path = null;
             }
             
             
         }
     }
-    IEnumerator Debug10Cars(Vector3[] path){
+    IEnumerator Debug10Cars(PathingCell[] path){
         int count = 0;
         while(count < 10){
             DebugCar(path);
@@ -89,15 +89,17 @@ public class MakePath : MonoBehaviour
             destination = null;
     }
     */
-    private void DebugCar(Vector3[] path){
-        Vector3 start = path[0];
-        GameObject car = Instantiate(debugCar,start,Quaternion.identity);
+    private void DebugCar(PathingCell[] path){
+        PathingCell start = path[0];
+        GameObject car = Instantiate(debugCar,start.pos,Quaternion.identity);
+        float initRot = start.NextDirection.Index * 45f;
+        car.transform.eulerAngles = new Vector3(0,initRot,0);
         CarBehavior carB = car.GetComponent<CarBehavior>();
         float speed = UnityEngine.Random.Range(minSpeed,maxSpeed);
         carB.setPath(path,speed);
     }
-
-    private Vector3[] MakeRealPath(Vector3Int[] path)
+    /*
+    private Vector3[] MakeRealPath(PathingCell[] path)
     {
         if(path.Length == 0){
             return null;
@@ -108,4 +110,5 @@ public class MakePath : MonoBehaviour
         }
         return ActualPath;
     }
+    */
 }

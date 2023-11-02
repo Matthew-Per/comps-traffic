@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using UnityEngine;
-public class CellBehavior : MonoBehaviour
+public class Cell : MonoBehaviour
 {
     //[SerializeField] GameObject debugIntersectionTell;
     public bool Intersection { get; private set; }
@@ -43,7 +43,7 @@ public class CellBehavior : MonoBehaviour
         group = g;
     }
     //Outbound should handle the gameobject
-    public void addOutboundRoad(Direction d, GameObject indicator, CellBehavior newNeighbor)
+    public void addOutboundRoad(Direction d, GameObject indicator, Cell newNeighbor)
     {
         Vector3 offset = offsetFinder(d);
         roadObjects[d] = Instantiate(indicator, transform.position + offset, indicator.transform.rotation, transform);
@@ -65,7 +65,7 @@ public class CellBehavior : MonoBehaviour
             InitiateIntersection();
         }
     }
-    public void addInboundRoad(Direction d, CellBehavior newNeighbor)
+    public void addInboundRoad(Direction d, Cell newNeighbor)
     {
         ChangeInbound(d, newNeighbor);
         if (checkIfIntersection())
@@ -98,13 +98,13 @@ public class CellBehavior : MonoBehaviour
     {
         throw new NotImplementedException();
     }
-    private void ChangeOutbound(Direction d, CellBehavior newConnection)
+    private void ChangeOutbound(Direction d, Cell newConnection)
     {
         CellConnection newOut = new CellConnection(newConnection, false);
         AllConnections[d] = newOut;
         AlertGroup = true;
     }
-    private void ChangeInbound(Direction d, CellBehavior newConnection)
+    private void ChangeInbound(Direction d, Cell newConnection)
     {
         CellConnection newIn = new CellConnection(newConnection, true);
         AllConnections[d] = newIn;
@@ -119,21 +119,21 @@ public class CellBehavior : MonoBehaviour
     /// Returns all outbound connections scripts, used specificlly for A Star, does not give direction
     /// </summary>
     /// <returns></returns>
-    public KeyValuePair<Direction, CellBehavior>[] GetOutbounds()
+    public KeyValuePair<Direction, Cell>[] GetOutbounds()
     {
-        List<KeyValuePair<Direction, CellBehavior>> returnee = new List<KeyValuePair<Direction, CellBehavior>>();
+        List<KeyValuePair<Direction, Cell>> returnee = new List<KeyValuePair<Direction, Cell>>();
         foreach (KeyValuePair<Direction, CellConnection> kvp in AllConnections)
         {
             if (!kvp.Value.Inbound)
             {
-                returnee.Add(new KeyValuePair<Direction, CellBehavior>(kvp.Key, kvp.Value.Cell));
+                returnee.Add(new KeyValuePair<Direction, Cell>(kvp.Key, kvp.Value.Cell));
             }
         }
         return returnee.ToArray();
     }
-    public CellBehavior[] GetInbounds()
+    public Cell[] GetInbounds()
     {
-        List<CellBehavior> returnee = new List<CellBehavior>();
+        List<Cell> returnee = new List<Cell>();
         foreach (KeyValuePair<Direction, CellConnection> kvp in AllConnections)
         {
             if (kvp.Value.Inbound)

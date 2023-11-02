@@ -4,18 +4,18 @@ using UnityEngine;
 
 public class RoadGroup : GenericNodeGroup
 {
-    CellBehavior RoadsEnd {get{return cells[cells.Count-1];} set{endCells[cells.Count-1]=value;}}
+    Cell RoadsEnd {get{return cells[cells.Count-1];} set{endCells[cells.Count-1]=value;}}
     void Start(){
-        cells = new List<CellBehavior>();
-        endCells = new List<CellBehavior>();
+        cells = new List<Cell>();
+        endCells = new List<Cell>();
     }
 
-    public override void AddCell(CellBehavior cell)
+    public override void AddCell(Cell cell)
     {
         cells.Add(cell);
         RoadsEnd = cell;
     }
-    public override bool Contains(CellBehavior cell)
+    public override bool Contains(Cell cell)
     {
         if(cells.Contains(cell)){
             return true;
@@ -23,7 +23,7 @@ public class RoadGroup : GenericNodeGroup
         return false;
     }
 
-    public override void RemoveCell(CellBehavior cell)
+    public override void RemoveCell(Cell cell)
     {
         cells.Remove(cell);
         //RoadsEnd = cells[cells.Count-1];

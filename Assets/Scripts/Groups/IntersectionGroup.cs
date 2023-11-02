@@ -19,16 +19,16 @@ public class IntersectionGroup : GenericNodeGroup
     Transform theI;
     [SerializeField] GameObject intersectIndicFab;
 
-    [SerializeField] List<CellBehavior> DEBUG_ENDCELLS = new List<CellBehavior>();
-    [SerializeField] List<CellBehavior> DEBUG_MYCELLS = new List<CellBehavior>();
+    [SerializeField] List<Cell> DEBUG_ENDCELLS = new List<Cell>();
+    [SerializeField] List<Cell> DEBUG_MYCELLS = new List<Cell>();
     
     void Awake(){
         enabled = false;
         theI = transform.GetChild(0);
     }
-    public void Setup(CellBehavior first, Grid grid){
-        cells = new List<CellBehavior>();
-        endCells = new List<CellBehavior>();
+    public void Setup(Cell first, Grid grid){
+        cells = new List<Cell>();
+        endCells = new List<Cell>();
         north = south = first.CellPosition.z;
         east = west = first.CellPosition.x;
         this.grid = grid;
@@ -38,7 +38,7 @@ public class IntersectionGroup : GenericNodeGroup
     }
     IEnumerator CellUpdateCheck(){
         while(true){
-            foreach(CellBehavior c in cells){
+            foreach(Cell c in cells){
                 if(c.AlertGroup){
                     FindEndCells(c);
                 }
@@ -109,14 +109,14 @@ public class IntersectionGroup : GenericNodeGroup
         }
 
     }
-    public override bool Contains(CellBehavior cell)
+    public override bool Contains(Cell cell)
     {
         if(cells.Contains(cell)){
             return true;
         }
         return false;
     }
-    public override void AddCell(CellBehavior cell){
+    public override void AddCell(Cell cell){
         if(cells.Contains(cell)){
             return;
         }
@@ -128,7 +128,7 @@ public class IntersectionGroup : GenericNodeGroup
         CalculateLegality(cell.CellPosition);
         MoveCenter();
     }
-    private void FindEndCells(CellBehavior newCell){
+    private void FindEndCells(Cell newCell){
         if(endCells.Contains(newCell)){
             endCells.Remove(newCell);
         }
@@ -147,7 +147,7 @@ public class IntersectionGroup : GenericNodeGroup
         theI.position = new Vector3((westVec.x + eastVec.x)/2,0,(northVec.z + southVec.z)/2);
 
     }
-    public override void RemoveCell(CellBehavior cell)
+    public override void RemoveCell(Cell cell)
     {
         cells.Remove(cell);
         cellPoses.Remove(cell.CellPosition);

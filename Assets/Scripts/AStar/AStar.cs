@@ -16,7 +16,7 @@ public class AStar : MonoBehaviour
     CellHead cellHead;
 
     List<string> workingAStar = new List<string>();
-    Dictionary<string, Vector3Int[]> finishedPaths = new Dictionary<string, Vector3Int[]>();
+    Dictionary<string, PathingCell[]> finishedPaths = new Dictionary<string, PathingCell[]>();
     public Vector3Int[] CellPath = null;
     /*
         [SerializeField] Vector3Int DebugStart;
@@ -44,7 +44,7 @@ public class AStar : MonoBehaviour
     /// <param name="a"></param>
     /// <param name="b"></param>
     /// <returns></returns>
-    public Vector3Int[] CompleteCoAstar(Vector3Int a, Vector3Int b)
+    public PathingCell[] CompleteCoAstar(Vector3Int a, Vector3Int b)
     {
         string key = VectorsToKeys(a, b);
         if (!workingAStar.Contains(key))
@@ -61,12 +61,12 @@ public class AStar : MonoBehaviour
         }
         return null;
     }
-    public Vector3Int[] TryCompletedPathRetrieval(Vector3Int a, Vector3Int b)
+    public PathingCell[] TryCompletedPathRetrieval(Vector3Int a, Vector3Int b)
     {
         string key = VectorsToKeys(a, b);
         if (finishedPaths.ContainsKey(key))
         {
-            Vector3Int[] temp = finishedPaths[key];
+            PathingCell[] temp = finishedPaths[key];
             finishedPaths.Remove(key);
             return temp;
         }
@@ -95,7 +95,7 @@ public class AStar : MonoBehaviour
             curr = open.OrderBy(KeyValuePair => KeyValuePair.Value.fCost).First().Value;
             if (curr.pos.Equals(finish))
             {
-                Vector3Int[] finalPath = constructPath(curr);
+                PathingCell[] finalPath = constructPath(curr);
                 string finalKey = VectorsToKeys(start, finish);
                 finishedPaths.Add(finalKey, finalPath);
                 yield break;
@@ -103,10 +103,10 @@ public class AStar : MonoBehaviour
             open.Remove(curr.pos);
             closed.Add(curr.pos);
 
-            KeyValuePair<Direction, CellBehavior>[] OutNeighbors = curr.cell.GetOutbounds();
-            foreach (KeyValuePair<Direction, CellBehavior> kvp in OutNeighbors)
+            KeyValuePair<Direction, Cell>[] OutNeighbors = curr.cell.GetOutbounds();
+            foreach (KeyValuePair<Direction, Cell> kvp in OutNeighbors)
             {
-                CellBehavior neighbor = kvp.Value;
+                Cell neighbor = kvp.Value;
                 Debug.Log(neighbor);
                 Debug.Log("Cell " +neighbor +" has cars of Count: " + neighbor.CarCount + "and list size of: " + neighbor.CurrentCarIds.Count);
                 Vector3Int neighborPos = neighbor.CellPosition;
@@ -264,13 +264,20 @@ public class AStar : MonoBehaviour
             return null;
         }
         */
-    Vector3Int[] constructPath(AStarCoord end)
+    PathingCell[] constructPath(AStarCoord end)
     {
-        List<Vector3Int> path = new List<Vector3Int>();
+        List<PathingCell> path = new List<PathingCell>();
         AStarCoord curr = end;
+        AStarCoord oldCurr = null;
         while (curr != null)
         {
-            path.Add(curr.pos);
+            var pc = new PathingCell(curr.cell);
+            if(oldCurr != null){
+                pc.NextDirection = oldCurr.parentToThis;
+                //from parent reversing to 
+            }
+            path.Add(pc);
+            oldCurr = curr;
             curr = curr.parent;
         }
         path.Reverse();
@@ -292,7 +299,7 @@ public class AStar : MonoBehaviour
     {
         return getDistance(a, b);
     }
-    private float traversalCost(Vector3Int a, CellBehavior b, ref HashSet<int> CheckedCars)
+    private float traversalCost(Vector3Int a, Cell b, ref HashSet<int> CheckedCars)
     {
         float Cost = 0;
         if (b.group != Group.Building)

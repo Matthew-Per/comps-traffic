@@ -6,11 +6,11 @@ using UnityEngine;
 public abstract class GenericNodeGroup : MonoBehaviour
 {
     public float Cost{get;protected set;}
-    public List<CellBehavior> cells {get; protected set;}
-    public List<CellBehavior> endCells{get; protected set;}
+    public List<Cell> cells {get; protected set;}
+    public List<Cell> endCells{get; protected set;}
     public int CarLoad{get; set;}
-    public abstract bool Contains(CellBehavior cell);
-    public abstract void AddCell(CellBehavior cell);
-    public abstract void RemoveCell(CellBehavior cell);
+    public abstract bool Contains(Cell cell);
+    public abstract void AddCell(Cell cell);
+    public abstract void RemoveCell(Cell cell);
 
 }

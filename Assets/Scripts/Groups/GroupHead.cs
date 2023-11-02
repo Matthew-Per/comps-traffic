@@ -4,7 +4,7 @@ using UnityEngine;
 using System;
 public class GroupHead : MonoBehaviour
 {
-    Dictionary<CellBehavior,GenericNodeGroup> ActiveGroups = new Dictionary<CellBehavior, GenericNodeGroup>();
+    Dictionary<Cell,GenericNodeGroup> ActiveGroups = new Dictionary<Cell, GenericNodeGroup>();
     [SerializeField] CellHead cellLead;
     [SerializeField] Grid grid;
     Dictionary<Vector3Int,GameObject> errorCells = new Dictionary<Vector3Int,GameObject>();
@@ -12,17 +12,17 @@ public class GroupHead : MonoBehaviour
     [SerializeField] GameObject intersectionFab;
     [SerializeField] GameObject roadFab;
     [SerializeField] GameObject buildingFab;
-    public GenericNodeGroup GetGroup(CellBehavior input){
+    public GenericNodeGroup GetGroup(Cell input){
         if(ActiveGroups.ContainsKey(input)){
             return ActiveGroups[input];
         }
         return null;
     }
-    public void UpdateRoad(CellBehavior cell){
+    public void UpdateRoad(Cell cell){
         if(ActiveGroups.ContainsKey(cell)){
             return;
         }
-        foreach(CellBehavior c in cell.GetInbounds()){
+        foreach(Cell c in cell.GetInbounds()){
             if(ActiveGroups.ContainsKey(c) && ActiveGroups[c] is RoadGroup){
                 ActiveGroups[c].AddCell(cell);
                 return;
@@ -32,7 +32,7 @@ public class GroupHead : MonoBehaviour
         newRoad.AddCell(cell);
         ActiveGroups.Add(cell,newRoad);
     }
-    public void UpdateIntersection(CellBehavior cell){
+    public void UpdateIntersection(Cell cell){
         if(ActiveGroups.ContainsKey(cell)){
             return;   
         }
@@ -40,7 +40,7 @@ public class GroupHead : MonoBehaviour
         IntersectionGroup lastIntersectionAddedTo = null;
         Vector3Int[] cardinals = cell.GetCardinals();
         foreach(Vector3Int cI in cardinals){
-            CellBehavior card = cellLead.getCell(cI);
+            Cell card = cellLead.getCell(cI);
             if(card == null){
                 continue;
             }
@@ -79,10 +79,10 @@ public class GroupHead : MonoBehaviour
             InstantiateIntersection(cell);
         }
     }
-    public void UpdateBuilding(CellBehavior cell){
+    public void UpdateBuilding(Cell cell){
         
     }
-    private void InstantiateIntersection(CellBehavior cell){
+    private void InstantiateIntersection(Cell cell){
         var go = Instantiate(intersectionFab,cell.transform.position,Quaternion.identity,transform);
         IntersectionGroup inter = go.GetComponent<IntersectionGroup>();
         inter.Setup(cell,grid);

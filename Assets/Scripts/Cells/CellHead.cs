@@ -24,7 +24,7 @@ public enum Direction {
     /// </summary>
 public class CellHead : MonoBehaviour
 {
-    Dictionary<Vector3Int,CellBehavior> ActiveCells = new Dictionary<Vector3Int, CellBehavior>();
+    Dictionary<Vector3Int,Cell> ActiveCells = new Dictionary<Vector3Int, Cell>();
     [SerializeField]
     GameObject cellPrefab; 
     [SerializeField]
@@ -42,8 +42,8 @@ public class CellHead : MonoBehaviour
     }
     private bool WereJustUpdatingBothCellsAtOnce(Vector3Int start, Direction dir, Vector3Int end){
         //all my homies hate modularization
-        CellBehavior cBS;
-        CellBehavior cBE;
+        Cell cBS;
+        Cell cBE;
         if(ActiveCells.ContainsKey(start)){
             if(ActiveCells[start].GetConnections().ContainsKey(dir) && !ActiveCells[start].Intersection){ //if cell already has occupied direction
                 Debug.LogError("Illegal Operation");
@@ -99,7 +99,7 @@ public class CellHead : MonoBehaviour
     }
     */
     private void cellUpdateEmpty(Vector3Int cell, Direction from){
-        CellBehavior cB;
+        Cell cB;
         if(ActiveCells.ContainsKey(cell)){
             cB = ActiveCells[cell];
         }
@@ -107,10 +107,10 @@ public class CellHead : MonoBehaviour
             cB = InstantiateCell(cell);
         }
     }
-    private CellBehavior InstantiateCell(Vector3Int cell){
+    private Cell InstantiateCell(Vector3Int cell){
             GameObject newCell = Instantiate(cellPrefab,grid.CellToWorld(cell),Quaternion.identity,transform);
             newCell.name = cell.ToString();
-            CellBehavior cB = newCell.GetComponent<CellBehavior>();
+            Cell cB = newCell.GetComponent<Cell>();
             cB.Setup(cell,Group.Road);
             ActiveCells.Add(cell,cB);
             return cB;
@@ -120,7 +120,7 @@ public class CellHead : MonoBehaviour
         return new ReadOnlyDictionary<Vector3Int, CellBehavior>(ActiveCells);
     }
     */
-    public CellBehavior getCell(Vector3Int input){
+    public Cell getCell(Vector3Int input){
         if(ActiveCells.ContainsKey(input)){
             return ActiveCells[input];
         }
@@ -141,8 +141,8 @@ public class CellHead : MonoBehaviour
     void OnDrawGizmosSelected()
     {
             Gizmos.color = Color.green;
-            CellBehavior[] arr = ActiveCells.Values.ToArray();
-            foreach(CellBehavior cb in arr){
+            Cell[] arr = ActiveCells.Values.ToArray();
+            foreach(Cell cb in arr){
                 var connections = cb.GetOutbounds();
                 foreach(var connection in connections){
                         Gizmos.DrawLine(cb.transform.position,connection.Value.transform.position);
