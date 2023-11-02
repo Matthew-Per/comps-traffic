@@ -19,7 +19,7 @@ public class Cell : MonoBehaviour
     public Group group = Group.NULL;
     public bool AlertGroup = false;
 
-    public List<int> CurrentCarIds { get; private set; }
+    public List<CarBehavior> CurrentCars { get; private set; }
 
     [SerializeField] public int CarCount;
     const int CarLayer = 3;
@@ -27,7 +27,7 @@ public class Cell : MonoBehaviour
     //int DivergingRoads = 0;
     void Start()
     {
-        CurrentCarIds = new List<int>();
+        CurrentCars = new List<CarBehavior>();
         //enabled = false;
     }
     private void InitiateIntersection()
@@ -175,7 +175,7 @@ public class Cell : MonoBehaviour
         if (other.gameObject.layer == CarLayer)
         {
             CarCount++;
-            CurrentCarIds.Add(other.gameObject.GetInstanceID());
+            CurrentCars.Add(other.GetComponent<CarBehavior>());
             //Debug.Log("NowContains car: " + other.gameObject.GetInstanceID());
         }
     }
@@ -185,7 +185,7 @@ public class Cell : MonoBehaviour
         if (other.gameObject.layer == CarLayer)
         {
             CarCount--;
-            CurrentCarIds.Remove(other.gameObject.GetInstanceID());
+            CurrentCars.Remove(other.GetComponent<CarBehavior>());
         }
     }
 

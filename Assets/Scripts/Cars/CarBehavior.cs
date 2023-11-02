@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using UnityEngine;
 
@@ -11,23 +12,22 @@ public class CarBehavior : MonoBehaviour
     PathingCell[] path = null;
     const float ARBITRARY_MIN_DISTANCE = 0.35f;
     const float ActualMaxSpeed = 1f;
-    [SerializeField] float DriverViewDist = 0;
+    [SerializeField] const float DriverViewDist = 4f;
     float MaxSpeed = 1f;
     [SerializeField] float absoulteStop = 1f;
     [SerializeField] bool brake = false;
     [SerializeField] bool eBrake = false;
     public float RotationSpeed;
     Rigidbody thisRigidbody;
-    int debugI = 0;
+    int currentI = 0;
     float currentSpeed = 0;
     [SerializeField] private float initialAcceleration = 1f;
     float speedReducer = 1;
     int layerMask = 1 << 3;
+    public CarBehavior currentTarget;
     BoxCollider detector;
     void Awake()
     {
-        detector = transform.GetChild(0).GetComponent<BoxCollider>();
-        DriverViewDist = detector.size.z;
         absoulteStop = Mathf.Sqrt(DriverViewDist);
     }
     public void setPath(PathingCell[] path, float maxSpeed = ActualMaxSpeed)
@@ -36,10 +36,11 @@ public class CarBehavior : MonoBehaviour
         this.path = path;
         thisRigidbody = gameObject.GetComponent<Rigidbody>();
         StartCoroutine(Go());
-        //StartCoroutine(CrashPrevention());
+        StartCoroutine(CrashPrevention());
         StartCoroutine(SpeedControl());
         //.25seconds is average human reaction
     }
+    /*
     void OnTriggerEnter(Collider collider)
     {
         if (collider.CompareTag("Hitbox"))
@@ -56,7 +57,7 @@ public class CarBehavior : MonoBehaviour
         {
             if (collider.gameObject.layer == 3)
             {
-                StartCoroutine(CrashPrevention(collider));
+                StartCoroutine(CrashPrevention());
             }
         }
     }
@@ -68,30 +69,40 @@ public class CarBehavior : MonoBehaviour
         }
         else if (collider.CompareTag("ViewDistance"))
         {
-            StopCoroutine(CrashPrevention(collider));
+            StopCoroutine(CrashPrevention());
             speedReducer = 1;
             brake = false;
         }
     }
-    IEnumerator CrashPrevention(Collider target)
+    */
+    IEnumerator CrashPrevention()
     {
         brake = true;
-        BoxCollider otherBoxCollider = target.GetComponent<BoxCollider>();
-        if (otherBoxCollider == null)
-        {
-            yield break;
-        }
+        BoxCollider otherBoxCollider = null;
         while (true)
         {
-            if(eBrake){
+           /*if(eBrake){
                 speedReducer = 0;
                 yield return null;
-            }
-            if (target == null)
+            }*/
+            if (currentTarget == null)
             {
-                speedReducer = 1;
-                brake = false;
-                yield break;
+                if(!FindNewTarget()){
+                    speedReducer = 1;
+                    brake = false;
+                    yield return new WaitForSeconds(5);
+                }
+            }
+            else{
+                otherBoxCollider = currentTarget.GetComponent<BoxCollider>();
+            }
+            if (otherBoxCollider == null)
+            {
+                if(!FindNewTarget()){
+                    speedReducer = 1;
+                    brake = false;
+                    yield return new WaitForSeconds(5);
+                }
             }
             Vector3 frontCenter = transform.position + transform.forward * (detector.size.z / 2);
             Vector3 closestPoint = otherBoxCollider.ClosestPoint(frontCenter);
@@ -102,7 +113,7 @@ public class CarBehavior : MonoBehaviour
             {
                 speedReducer = 1;
                 brake = false;
-                yield break;
+                yield return new WaitForSeconds(5);
             }
             if (distance < absoulteStop)
             {
@@ -110,6 +121,44 @@ public class CarBehavior : MonoBehaviour
             }
             yield return null;
         }
+    }
+    bool FindNewTarget(){
+        currentTarget = null;
+        PathingCell next = null;
+        if(path.Count() > currentI +1){
+            next = path[currentI+1];
+        } 
+        if(path[currentI].cell.CurrentCars.Count > 1){
+            var cc = path[currentI].cell.CurrentCars;
+            int indexOfThis = cc.IndexOf(this);
+            if(cc.IndexOf(this) == 0 && next != null){
+                findNextTargetOnNextCell(path[currentI+1].cell.CurrentCars);
+            }
+            else{
+                for(int i = cc.Count()-1; i >= 0; i--){
+                    if(indexOfThis > i){
+                        currentTarget = cc[i];
+                        break;
+                    }
+                }
+            }
+        }
+        else if (next != null){
+            currentTarget = findNextTargetOnNextCell(path[currentI+1].cell.CurrentCars);
+        }
+        if(currentTarget != null){
+            return true;
+        }
+        return false;
+    }
+    CarBehavior findNextTargetOnNextCell(List<CarBehavior> cc){
+            for(int i = cc.Count()-1; i >= 0; i--){
+                if(!cc[i].Equals(this)){
+                    return cc[i];
+                }
+            }
+            //TODO: uh oh
+            return null;
     }
     IEnumerator SpeedControl()
     {
@@ -128,7 +177,7 @@ public class CarBehavior : MonoBehaviour
         float t = 0;
         for (int i = 0; i < path.Length; i++)
         {
-            debugI = i;
+            currentI = i;
             while (Vector3.Distance(transform.position, path[i].pos) > ARBITRARY_MIN_DISTANCE)
             {
                 //find the vector pointing from our position to the target
@@ -155,45 +204,4 @@ public class CarBehavior : MonoBehaviour
         Destroy(gameObject);
 
     }
-    IEnumerator GoRigid()
-    {
-        Quaternion _lookRotation;
-        Vector3 _direction;
-
-        float forceMagnitude = 10.0f; // Adjust this value as needed
-        float maxSpeed = 5.0f;
-        float t = 0;
-        for (int i = 0; i < path.Length; i++)
-        {
-            debugI = i;
-            while (Vector3.Distance(transform.position, path[i].pos) > ARBITRARY_MIN_DISTANCE)
-            {
-                Vector3 direction = (path[i].pos - transform.position).normalized;
-
-                float currentSpeed = Mathf.Min(maxSpeed, Vector3.Distance(transform.position, path[i].pos) / 2.0f);
-
-                // Create a force vector in the direction of movement
-                Vector3 force = direction * forceMagnitude;
-
-                // Apply the force to the rigidbody
-                thisRigidbody.AddForce(force, ForceMode.Force);
-
-                // Rotate the object to face the target direction over time
-                Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
-                transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, t);
-
-                // Increase the 't' parameter for smooth interpolation
-                t += currentSpeed * Time.deltaTime;
-
-                //yield return new WaitForSeconds(.1f);
-                yield return null;
-            }
-            //transform.position = path[i];
-            t = 0;
-        }
-        yield return new WaitForSeconds(2);
-        Destroy(gameObject);
-
-    }
-
 }

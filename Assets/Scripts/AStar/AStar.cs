@@ -108,7 +108,7 @@ public class AStar : MonoBehaviour
             {
                 Cell neighbor = kvp.Value;
                 Debug.Log(neighbor);
-                Debug.Log("Cell " +neighbor +" has cars of Count: " + neighbor.CarCount + "and list size of: " + neighbor.CurrentCarIds.Count);
+                Debug.Log("Cell " +neighbor +" has cars of Count: " + neighbor.CarCount + "and list size of: " + neighbor.CurrentCars.Count);
                 Vector3Int neighborPos = neighbor.CellPosition;
                 Direction dir = kvp.Key;
                 if (closed.Contains(neighborPos))
@@ -306,8 +306,9 @@ public class AStar : MonoBehaviour
         {
             int CarCost = 0;
             int CarCostMultiplier = 3;
-            foreach (int id in b.CurrentCarIds)
+            foreach (CarBehavior car in b.CurrentCars)
             {
+                int id = car.GetInstanceID();
                 //Debug.Log(id);
                 if (CheckedCars.Add(id))
                 {
