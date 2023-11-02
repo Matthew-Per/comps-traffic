@@ -1,0 +1,192 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using UnityEngine;
+public class CellBehavior : MonoBehaviour
+{
+    //[SerializeField] GameObject debugIntersectionTell;
+    public bool Intersection { get; private set; }
+    //roads
+    //RoadType[] roads = new RoadType[8]{RoadType.NULL,RoadType.NULL,RoadType.NULL,RoadType.NULL,RoadType.NULL,RoadType.NULL,RoadType.NULL,RoadType.NULL};
+    //objs
+    public Vector3Int CellPosition { get; private set; }
+    Dictionary<Direction, GameObject> roadObjects = new Dictionary<Direction, GameObject>();
+    //neighbors
+    Dictionary<Direction, CellConnection> AllConnections = new Dictionary<Direction, CellConnection>();
+    const float clockwiseRotation = 45f;
+    const float indicOffset = 1.25f;
+    public Group group = Group.NULL;
+    public bool AlertGroup = false;
+
+    public List<int> CurrentCarIds { get; private set; }
+
+    [SerializeField] public int CarCount;
+    const int CarLayer = 3;
+    //if directions >2 become intersection
+    //int DivergingRoads = 0;
+    void Start()
+    {
+        CurrentCarIds = new List<int>();
+        //enabled = false;
+    }
+    private void InitiateIntersection()
+    {
+        Intersection = true;
+        group = Group.Intersection;
+        //Instantiate(debugIntersectionTell,new Vector3(transform.position.x,transform.position.y + indicOffset,transform.position.z),debugIntersectionTell.transform.rotation,transform);
+    }
+    public void Setup(Vector3Int position, Group g)
+    {
+        this.CellPosition = position;
+        enabled = true;
+        group = g;
+    }
+    //Outbound should handle the gameobject
+    public void addOutboundRoad(Direction d, GameObject indicator, CellBehavior newNeighbor)
+    {
+        Vector3 offset = offsetFinder(d);
+        roadObjects[d] = Instantiate(indicator, transform.position + offset, indicator.transform.rotation, transform);
+        roadObjects[d].name = d.ToString();
+        roadObjects[d].transform.Rotate(new Vector3(0, d.Index * clockwiseRotation, 0));
+        ChangeOutbound(d, newNeighbor);
+        /*
+        if(!AllConnections.ContainsKey(d.Opposing())){
+            DivergingRoads++;
+        }
+        else if(AllConnections.ContainsKey(d.Opposing()) && !AllConnections[d.Opposing()].Inbound){
+            DivergingRoads++;
+        }
+        if(DivergingRoads > 1){
+            InitiateIntersection();
+        }*/
+        if (checkIfIntersection())
+        {
+            InitiateIntersection();
+        }
+    }
+    public void addInboundRoad(Direction d, CellBehavior newNeighbor)
+    {
+        ChangeInbound(d, newNeighbor);
+        if (checkIfIntersection())
+        {
+            InitiateIntersection();
+        }
+    }
+    private bool checkIfIntersection()
+    {
+        if (AllConnections.Count >= 2 && !Intersection)
+        {
+            if (AllConnections.Count > 2)
+            {
+                return true;
+            }
+            //should only have two elements if it reached this point
+            var arrC = AllConnections.ToArray<KeyValuePair<Direction, CellConnection>>();
+            if (arrC[0].Value.Inbound == !arrC[1].Value.Inbound)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    public void removeRoad(Direction d, GameObject indicator)
+    {
+        throw new NotImplementedException();
+    }
+    private void ChangeOutbound(Direction d, CellBehavior newConnection)
+    {
+        CellConnection newOut = new CellConnection(newConnection, false);
+        AllConnections[d] = newOut;
+        AlertGroup = true;
+    }
+    private void ChangeInbound(Direction d, CellBehavior newConnection)
+    {
+        CellConnection newIn = new CellConnection(newConnection, true);
+        AllConnections[d] = newIn;
+        AlertGroup = true;
+    }
+    public ReadOnlyDictionary<Direction, CellConnection> GetConnections()
+    {
+        ReadOnlyDictionary<Direction, CellConnection> readOnlyDictionary = new ReadOnlyDictionary<Direction, CellConnection>(AllConnections);
+        return readOnlyDictionary;
+    }
+    /// <summary>
+    /// Returns all outbound connections scripts, used specificlly for A Star, does not give direction
+    /// </summary>
+    /// <returns></returns>
+    public KeyValuePair<Direction, CellBehavior>[] GetOutbounds()
+    {
+        List<KeyValuePair<Direction, CellBehavior>> returnee = new List<KeyValuePair<Direction, CellBehavior>>();
+        foreach (KeyValuePair<Direction, CellConnection> kvp in AllConnections)
+        {
+            if (!kvp.Value.Inbound)
+            {
+                returnee.Add(new KeyValuePair<Direction, CellBehavior>(kvp.Key, kvp.Value.Cell));
+            }
+        }
+        return returnee.ToArray();
+    }
+    public CellBehavior[] GetInbounds()
+    {
+        List<CellBehavior> returnee = new List<CellBehavior>();
+        foreach (KeyValuePair<Direction, CellConnection> kvp in AllConnections)
+        {
+            if (kvp.Value.Inbound)
+            {
+                returnee.Add(kvp.Value.Cell);
+            }
+        }
+        return returnee.ToArray();
+    }
+    public Vector3Int[] GetCardinals()
+    {
+        Vector3Int[] returnee = new Vector3Int[4];
+        returnee[0] = CellPosition + Direction.N.Translation;
+        returnee[1] = CellPosition + Direction.E.Translation;
+        returnee[2] = CellPosition + Direction.S.Translation;
+        returnee[3] = CellPosition + Direction.W.Translation;
+        return returnee;
+    }
+
+    /*public Dictionary<Direction, Vector3Int> getConnections(){
+        Dictionary<Direction, Vector3Int> validConnections = new Dictionary<Direction, Vector3Int>();
+        int i = 0;
+        foreach(Vector3Int? connector in connections){
+            if(connector.HasValue){
+                validConnections.Add(Direction.intToDirection(i),connector.Value);
+            }
+            i++;
+        }
+        return validConnections;
+    }
+    */
+    private Vector3 offsetFinder(Direction d)
+    {
+        Vector3 vector3 = d.Translation;
+        return vector3 * indicOffset;
+    }
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.layer == CarLayer)
+        {
+            CarCount++;
+            CurrentCarIds.Add(other.gameObject.GetInstanceID());
+            //Debug.Log("NowContains car: " + other.gameObject.GetInstanceID());
+        }
+    }
+
+    void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.layer == CarLayer)
+        {
+            CarCount--;
+            CurrentCarIds.Remove(other.gameObject.GetInstanceID());
+        }
+    }
+
+}
