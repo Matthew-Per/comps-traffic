@@ -95,8 +95,9 @@ public class MakePath : MonoBehaviour
         float initRot = start.NextDirection.Index * 45f;
         car.transform.eulerAngles = new Vector3(0,initRot,0);
         CarBehavior carB = car.GetComponent<CarBehavior>();
-        float speed = UnityEngine.Random.Range(minSpeed,maxSpeed);
-        carB.setPath(path,speed);
+        //float speed = UnityEngine.Random.Range(minSpeed,maxSpeed);
+        //carB.setPath(path,speed);
+        carB.setPath(path,maxSpeed);
     }
     /*
     private Vector3[] MakeRealPath(PathingCell[] path)

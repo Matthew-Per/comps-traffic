@@ -1,3 +1,5 @@
+using UnityEngine;
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -5,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using UnityEngine;
+using Unity.VisualScripting;
 
 public class CarBehavior : MonoBehaviour
 {
@@ -12,19 +15,18 @@ public class CarBehavior : MonoBehaviour
     PathingCell[] path = null;
     const float ARBITRARY_MIN_DISTANCE = 0.35f;
     const float ActualMaxSpeed = 1f;
-    [SerializeField] const float DriverViewDist = 4f;
+    [SerializeField] const float DriverViewDist = 1.25f;
     float MaxSpeed = 1f;
     [SerializeField] float absoulteStop = 1f;
     [SerializeField] bool brake = false;
     [SerializeField] bool eBrake = false;
     public float RotationSpeed;
-    Rigidbody thisRigidbody;
     int currentI = 0;
     float currentSpeed = 0;
     [SerializeField] private float initialAcceleration = 1f;
-    float speedReducer = 1;
-    int layerMask = 1 << 3;
-    public CarBehavior currentTarget;
+    [SerializeField] float speedReducer = 1;
+    //public CarBehavior currentTarget;
+    public CarBehavior GizmoTarget;
     BoxCollider detector;
     void Awake()
     {
@@ -34,10 +36,8 @@ public class CarBehavior : MonoBehaviour
     {
         MaxSpeed = maxSpeed;
         this.path = path;
-        thisRigidbody = gameObject.GetComponent<Rigidbody>();
         StartCoroutine(Go());
-        StartCoroutine(CrashPrevention());
-        StartCoroutine(SpeedControl());
+        StartCoroutine(TargetSearch());
         //.25seconds is average human reaction
     }
     /*
@@ -75,7 +75,35 @@ public class CarBehavior : MonoBehaviour
         }
     }
     */
-    IEnumerator CrashPrevention()
+    IEnumerator TargetSearch(){
+        CarBehavior finder = null;
+        //TODO:
+        var cc = path[currentI].cell.CurrentCars;
+        int thisIndex = cc.IndexOf(this);
+        if(thisIndex > 0){
+            finder = cc[thisIndex--];
+            Debug.Log("Found target within cell");
+        }
+        else if(path[currentI + 1] != null){
+            var ccN = path[currentI + 1].cell.CurrentCars;
+            for(int i = ccN.Count-1; i >= 0; i--){
+                if(!ccN[i].Equals(this)){
+                    finder = ccN[i];
+                    Debug.Log("Found target within next cell");
+                    break;
+                }
+            }
+        }
+        if(finder != null && !brake){
+            GizmoTarget = finder;
+            StartCoroutine(CrashPrevention(finder));
+            Debug.Log("Starting Braking");
+        }
+        else{
+            yield return null;
+        }
+    }
+    IEnumerator CrashPrevention(CarBehavior target)
     {
         brake = true;
         BoxCollider otherBoxCollider = null;
@@ -85,86 +113,33 @@ public class CarBehavior : MonoBehaviour
                 speedReducer = 0;
                 yield return null;
             }*/
-            if (currentTarget == null)
-            {
-                if(!FindNewTarget()){
-                    speedReducer = 1;
-                    brake = false;
-                    yield return new WaitForSeconds(5);
-                }
+            Vector3 frontCenter = Vector3.zero;
+            Vector3 closestPoint = Vector3.zero;
+            try{
+                otherBoxCollider = target.GetComponent<BoxCollider>();
+                frontCenter = transform.TransformPoint(Vector3.forward * .8f);
+                closestPoint = otherBoxCollider.ClosestPoint(frontCenter);
             }
-            else{
-                otherBoxCollider = currentTarget.GetComponent<BoxCollider>();
+            catch(NullReferenceException e){
+                speedReducer = 1;
+                brake = false;
+                yield break;
             }
-            if (otherBoxCollider == null)
-            {
-                if(!FindNewTarget()){
-                    speedReducer = 1;
-                    brake = false;
-                    yield return new WaitForSeconds(5);
-                }
-            }
-            Vector3 frontCenter = transform.position + transform.forward * (detector.size.z / 2);
-            Vector3 closestPoint = otherBoxCollider.ClosestPoint(frontCenter);
             float distance = Vector3.Distance(frontCenter, closestPoint);
-            brake = true;
-            speedReducer = 1 - (distance / DriverViewDist);
             if (distance > DriverViewDist)
             {
                 speedReducer = 1;
                 brake = false;
-                yield return new WaitForSeconds(5);
+                Debug.Log("EndingBraking");
+                yield break;
             }
             if (distance < absoulteStop)
             {
                 speedReducer = 0;
             }
-            yield return null;
-        }
-    }
-    bool FindNewTarget(){
-        currentTarget = null;
-        PathingCell next = null;
-        if(path.Count() > currentI +1){
-            next = path[currentI+1];
-        } 
-        if(path[currentI].cell.CurrentCars.Count > 1){
-            var cc = path[currentI].cell.CurrentCars;
-            int indexOfThis = cc.IndexOf(this);
-            if(cc.IndexOf(this) == 0 && next != null){
-                findNextTargetOnNextCell(path[currentI+1].cell.CurrentCars);
-            }
             else{
-                for(int i = cc.Count()-1; i >= 0; i--){
-                    if(indexOfThis > i){
-                        currentTarget = cc[i];
-                        break;
-                    }
-                }
+                speedReducer = 1 - (distance / DriverViewDist);
             }
-        }
-        else if (next != null){
-            currentTarget = findNextTargetOnNextCell(path[currentI+1].cell.CurrentCars);
-        }
-        if(currentTarget != null){
-            return true;
-        }
-        return false;
-    }
-    CarBehavior findNextTargetOnNextCell(List<CarBehavior> cc){
-            for(int i = cc.Count()-1; i >= 0; i--){
-                if(!cc[i].Equals(this)){
-                    return cc[i];
-                }
-            }
-            //TODO: uh oh
-            return null;
-    }
-    IEnumerator SpeedControl()
-    {
-        while (true)
-        {
-            currentSpeed = MaxSpeed * speedReducer;
             yield return null;
         }
     }
@@ -180,6 +155,7 @@ public class CarBehavior : MonoBehaviour
             currentI = i;
             while (Vector3.Distance(transform.position, path[i].pos) > ARBITRARY_MIN_DISTANCE)
             {
+                currentSpeed = MaxSpeed * speedReducer;
                 //find the vector pointing from our position to the target
                 _direction = (path[i].pos - transform.position).normalized;
 
@@ -203,5 +179,9 @@ public class CarBehavior : MonoBehaviour
         yield return new WaitForSeconds(2);
         Destroy(gameObject);
 
+    }
+    void OnDrawGizmosSelected(){
+        Gizmos.color = Color.blue;
+        Gizmos.DrawLine(transform.position, GizmoTarget.transform.position);
     }
 }

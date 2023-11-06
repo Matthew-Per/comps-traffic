@@ -19,7 +19,7 @@ public class Cell : MonoBehaviour
     public Group group = Group.NULL;
     public bool AlertGroup = false;
 
-    public List<CarBehavior> CurrentCars { get; private set; }
+    [SerializeField] public List<CarBehavior> CurrentCars { get; private set; }
 
     [SerializeField] public int CarCount;
     const int CarLayer = 3;
