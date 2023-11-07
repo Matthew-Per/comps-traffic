@@ -437,7 +437,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 0c868938d98c6b5478c850e9f3cbcd7a, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 0c868938d98c6b5478c850e9f3cbcd7a, type: 3}
       propertyPath: m_LocalRotation.x
@@ -445,7 +445,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 0c868938d98c6b5478c850e9f3cbcd7a, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 0c868938d98c6b5478c850e9f3cbcd7a, type: 3}
       propertyPath: m_LocalRotation.z
@@ -532,7 +532,8 @@ MonoBehaviour:
   eBrake: 0
   RotationSpeed: 5
   initialAcceleration: 0.1
-  currentTarget: {fileID: 0}
+  speedReducer: 1
+  GizmoTarget: {fileID: 0}
 --- !u!54 &7880557413434610623
 Rigidbody:
   m_ObjectHideFlags: 0

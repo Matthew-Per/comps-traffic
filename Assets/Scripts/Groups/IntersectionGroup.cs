@@ -163,4 +163,10 @@ public class IntersectionGroup : GenericNodeGroup
             CellsUnfinished.Remove(cellPos);
         }
     }
+    void OnDrawGizmosSelected(){
+        Gizmos.color = Color.white;
+        foreach(Cell cell in cells){
+            Gizmos.DrawWireCube(cell.transform.position, grid.cellSize);
+        }
+    }
 }

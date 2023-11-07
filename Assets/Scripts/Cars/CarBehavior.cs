@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
-using UnityEngine;
 using Unity.VisualScripting;
 
 public class CarBehavior : MonoBehaviour
@@ -15,7 +14,7 @@ public class CarBehavior : MonoBehaviour
     PathingCell[] path = null;
     const float ARBITRARY_MIN_DISTANCE = 0.35f;
     const float ActualMaxSpeed = 1f;
-    [SerializeField] const float DriverViewDist = 1.25f;
+    [SerializeField] const float DriverViewDist = 3f;
     float MaxSpeed = 1f;
     [SerializeField] float absoulteStop = 1f;
     [SerializeField] bool brake = false;
@@ -75,61 +74,86 @@ public class CarBehavior : MonoBehaviour
         }
     }
     */
-    IEnumerator TargetSearch(){
-        CarBehavior finder = null;
-        //TODO:
-        var cc = path[currentI].cell.CurrentCars;
-        int thisIndex = cc.IndexOf(this);
-        if(thisIndex > 0){
-            finder = cc[thisIndex--];
-            Debug.Log("Found target within cell");
-        }
-        else if(path[currentI + 1] != null){
-            var ccN = path[currentI + 1].cell.CurrentCars;
-            for(int i = ccN.Count-1; i >= 0; i--){
-                if(!ccN[i].Equals(this)){
-                    finder = ccN[i];
-                    Debug.Log("Found target within next cell");
-                    break;
+    IEnumerator TargetSearch()
+    {
+        while (true)
+        {
+            if(!brake){
+            CarBehavior finder = null;
+            var cc = path[currentI - 1].cell.CurrentCars;//should be current cell
+            int thisIndex = cc.IndexOf(this);
+            if (thisIndex > 0)
+            {
+                for(int i = thisIndex-1; i >= 0; i--){
+                    if(!cc[i].Equals(this)){
+                        finder = cc[i];
+                        Debug.Log("Found target within cell");
+                        break;
+                    }
+                }
+
+            }
+            else if (path[currentI] != null)
+            {
+                var ccN = path[currentI].cell.CurrentCars;
+                for (int i = ccN.Count - 1; i >= 0; i--)
+                {
+                    if (!ccN[i].Equals(this))
+                    {
+                        finder = ccN[i];
+                        Debug.Log("Found target within next cell");
+                        break;
+                    }
                 }
             }
-        }
-        if(finder != null && !brake){
-            GizmoTarget = finder;
-            StartCoroutine(CrashPrevention(finder));
-            Debug.Log("Starting Braking");
-        }
-        else{
+            if (finder != null)
+            {
+                GizmoTarget = finder;
+                StartCoroutine(CrashPrevention(finder));
+                Debug.Log("Starting Braking");
+            }
+            }
             yield return null;
         }
     }
+    Vector3 frontCenter;
+    Vector3 closestPoint;
     IEnumerator CrashPrevention(CarBehavior target)
     {
         brake = true;
         BoxCollider otherBoxCollider = null;
         while (true)
         {
-           /*if(eBrake){
-                speedReducer = 0;
-                yield return null;
-            }*/
-            Vector3 frontCenter = Vector3.zero;
-            Vector3 closestPoint = Vector3.zero;
-            try{
+            /*if(eBrake){
+                 speedReducer = 0;
+                 yield return null;
+             }*/
+
+            try
+            {
                 otherBoxCollider = target.GetComponent<BoxCollider>();
                 frontCenter = transform.TransformPoint(Vector3.forward * .8f);
                 closestPoint = otherBoxCollider.ClosestPoint(frontCenter);
             }
-            catch(NullReferenceException e){
-                speedReducer = 1;
-                brake = false;
-                yield break;
-            }
-            float distance = Vector3.Distance(frontCenter, closestPoint);
-            if (distance > DriverViewDist)
+            catch (Exception e)
             {
                 speedReducer = 1;
                 brake = false;
+                GizmoTarget = null;
+                yield break;
+            }
+            float distance = Vector3.Distance(frontCenter, closestPoint);
+            var angle = Mathf.Abs(Vector3.SignedAngle(frontCenter, closestPoint,transform.position));
+            Debug.Log(angle);
+            if(angle > 90f){
+               
+                
+            }
+            else if (distance > DriverViewDist)
+            {
+                speedReducer = 1;
+                brake = false;
+                GizmoTarget = null;
                 Debug.Log("EndingBraking");
                 yield break;
             }
@@ -137,7 +161,8 @@ public class CarBehavior : MonoBehaviour
             {
                 speedReducer = 0;
             }
-            else{
+            else
+            {
                 speedReducer = 1 - (distance / DriverViewDist);
             }
             yield return null;
@@ -153,6 +178,7 @@ public class CarBehavior : MonoBehaviour
         for (int i = 0; i < path.Length; i++)
         {
             currentI = i;
+            Vector3 init = transform.position;
             while (Vector3.Distance(transform.position, path[i].pos) > ARBITRARY_MIN_DISTANCE)
             {
                 currentSpeed = MaxSpeed * speedReducer;
@@ -166,7 +192,7 @@ public class CarBehavior : MonoBehaviour
                 //thisRigidbody.rotation = Quaternion.Slerp(Quaternion.Euler(0, thisRigidbody.rotation.eulerAngles.y, 0), _lookRotation, Time.deltaTime * RotationSpeed);
                 //thisRigidbody.AddForce(transform.forward*Acceleration,ForceMode.Acceleration);
                 transform.rotation = Quaternion.Lerp(transform.rotation, _lookRotation, t * 2);
-                transform.position = Vector3.Lerp(transform.position, path[i].pos, t);
+                transform.position = Vector3.Lerp(init, path[i].pos, t);
 
 
                 t += currentSpeed * Time.deltaTime;
@@ -180,8 +206,9 @@ public class CarBehavior : MonoBehaviour
         Destroy(gameObject);
 
     }
-    void OnDrawGizmosSelected(){
+    void OnDrawGizmosSelected()
+    {
         Gizmos.color = Color.blue;
-        Gizmos.DrawLine(transform.position, GizmoTarget.transform.position);
+        Gizmos.DrawLine(frontCenter, closestPoint);
     }
 }

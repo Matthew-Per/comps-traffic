@@ -17,6 +17,7 @@ public class MakePath : MonoBehaviour
     Vector3Int? destination;
     bool noDoubleOps = false;
     [SerializeField] GameObject debugCar;
+    [SerializeField] GameObject debugCarSpawner;
 
     // Update is called once per frame
     void Update()
@@ -53,63 +54,16 @@ public class MakePath : MonoBehaviour
             if(path != null){
                 beginning=null;
                 destination=null;
-                StartCoroutine(Debug10Cars(path));
+                Debug10Cars(path);
                 path = null;
             }
             
             
         }
     }
-    IEnumerator Debug10Cars(PathingCell[] path){
-        int count = 0;
-        while(count < 10){
-            DebugCar(path);
-            yield return new WaitForSeconds(.1f);
-            count ++;
-        }
-
+    void Debug10Cars(PathingCell[] path){
+        var ob = Instantiate(debugCarSpawner,path[0].pos,Quaternion.identity);
+        var cS = ob.GetComponent<CarStorage>();
+        cS.Setup(10,path,maxSpeed);
     }
-    /*
-    private async void beginAStar(){
-            Vector3[] RealPath = null;
-            try{
-                Vector3Int[] path = await aStar.Pathfind(beginning.Value,destination.Value);
-                RealPath = MakeRealPath(path);
-                String vec3 = "";
-                foreach(Vector3 p in RealPath){
-                    vec3 += p.ToString() + " ";
-                }
-                Debug.Log(vec3);
-                DebugCar(RealPath);
-            }
-            catch(Exception e){
-                Debug.LogException(e);
-            }
-            beginning = null;
-            destination = null;
-    }
-    */
-    private void DebugCar(PathingCell[] path){
-        PathingCell start = path[0];
-        GameObject car = Instantiate(debugCar,start.pos,Quaternion.identity);
-        float initRot = start.NextDirection.Index * 45f;
-        car.transform.eulerAngles = new Vector3(0,initRot,0);
-        CarBehavior carB = car.GetComponent<CarBehavior>();
-        //float speed = UnityEngine.Random.Range(minSpeed,maxSpeed);
-        //carB.setPath(path,speed);
-        carB.setPath(path,maxSpeed);
-    }
-    /*
-    private Vector3[] MakeRealPath(PathingCell[] path)
-    {
-        if(path.Length == 0){
-            return null;
-        }
-        Vector3[] ActualPath = new Vector3[path.Length];
-        for (int i = 0; i < path.Length; i ++){
-            ActualPath[i] = grid.CellToWorld(path[i]);
-        }
-        return ActualPath;
-    }
-    */
 }

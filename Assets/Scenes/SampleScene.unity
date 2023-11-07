@@ -1173,9 +1173,10 @@ MonoBehaviour:
   selector: {fileID: 2554808214076825219}
   cellLead: {fileID: 1579496309}
   aStar: {fileID: 1640687493}
-  maxSpeed: 0.1
-  minSpeed: 0.001
+  maxSpeed: 5
+  minSpeed: 0.1
   debugCar: {fileID: 9122328846991822449, guid: 6f8440a5659d03a43b0d1924955fe4b4, type: 3}
+  debugCarSpawner: {fileID: 9122328846991822449, guid: 1d949bc8ac235b049abdc10046117f46, type: 3}
 --- !u!1 &1782838082
 GameObject:
   m_ObjectHideFlags: 0

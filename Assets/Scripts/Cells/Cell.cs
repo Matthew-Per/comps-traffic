@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Runtime.InteropServices;
 using UnityEngine;
 public class Cell : MonoBehaviour
 {
@@ -19,7 +20,7 @@ public class Cell : MonoBehaviour
     public Group group = Group.NULL;
     public bool AlertGroup = false;
 
-    [SerializeField] public List<CarBehavior> CurrentCars { get; private set; }
+    [field: SerializeField] public List<CarBehavior> CurrentCars { get; private set; }
 
     [SerializeField] public int CarCount;
     const int CarLayer = 3;
