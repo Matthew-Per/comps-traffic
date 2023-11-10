@@ -14,13 +14,17 @@ public class CarBehavior : MonoBehaviour
     PathingCell[] path = null;
     const float ARBITRARY_MIN_DISTANCE = 0.35f;
     const float ActualMaxSpeed = 1f;
+    const float CellSize = 2.5f;
     [SerializeField] const float DriverViewDist = 3f;
+    const float YClipPrevention = .25f;
     float MaxSpeed = 1f;
-    [SerializeField] float absoulteStop = 1f;
+    const float absoulteStop = .25f;
     [SerializeField] bool brake = false;
     [SerializeField] bool eBrake = false;
     public float RotationSpeed;
     int currentI = 0;
+    PathingCell Current;
+    PathingCell Next;
     float currentSpeed = 0;
     [SerializeField] private float initialAcceleration = 1f;
     [SerializeField] float speedReducer = 1;
@@ -29,7 +33,7 @@ public class CarBehavior : MonoBehaviour
     BoxCollider detector;
     void Awake()
     {
-        absoulteStop = Mathf.Sqrt(DriverViewDist);
+        transform.Translate(new Vector3(0, YClipPrevention,0));
     }
     public void setPath(PathingCell[] path, float maxSpeed = ActualMaxSpeed)
     {
@@ -80,7 +84,7 @@ public class CarBehavior : MonoBehaviour
         {
             if(!brake){
             CarBehavior finder = null;
-            var cc = path[currentI - 1].cell.CurrentCars;//should be current cell
+            var cc = Current.cell.CurrentCars;//should be current cell
             int thisIndex = cc.IndexOf(this);
             if (thisIndex > 0)
             {
@@ -143,21 +147,24 @@ public class CarBehavior : MonoBehaviour
                 yield break;
             }
             float distance = Vector3.Distance(frontCenter, closestPoint);
-            var angle = Mathf.Abs(Vector3.SignedAngle(frontCenter, closestPoint,transform.position));
+            //TODO
+            /*var angle = Mathf.Abs(Vector3.SignedAngle(frontCenter, closestPoint,transform.position));
             Debug.Log(angle);
             if(angle > 90f){
                
                 
             }
-            else if (distance > DriverViewDist)
+            */
+            if (distance > DriverViewDist)
             {
+                
                 speedReducer = 1;
                 brake = false;
                 GizmoTarget = null;
                 Debug.Log("EndingBraking");
                 yield break;
             }
-            if (distance < absoulteStop)
+            if (distance <= absoulteStop)
             {
                 speedReducer = 0;
             }
@@ -171,36 +178,53 @@ public class CarBehavior : MonoBehaviour
     IEnumerator Go()
     {
 
-        //values for internal use
         Quaternion _lookRotation;
         Vector3 _direction;
         float t = 0;
+        Current = path[0];
         for (int i = 0; i < path.Length; i++)
         {
             currentI = i;
+            Next = path[i];
+            var NextPos = new Vector3(path[i].pos.x,path[i].pos.y + YClipPrevention, path[i].pos.z);
+            var NextCell = path[i].cell;
             Vector3 init = transform.position;
-            while (Vector3.Distance(transform.position, path[i].pos) > ARBITRARY_MIN_DISTANCE)
+            if(NextCell.group == Group.Road){
+            while (Vector3.Distance(transform.position, NextPos) > ARBITRARY_MIN_DISTANCE)
             {
+                
                 currentSpeed = MaxSpeed * speedReducer;
-                //find the vector pointing from our position to the target
-                _direction = (path[i].pos - transform.position).normalized;
-
-                //create the rotation we need to be in to look at the target
+                _direction = (NextPos - transform.position).normalized;
                 _lookRotation = Quaternion.LookRotation(new Vector3(_direction.x, 0, _direction.z));
-
-                //rotate us over time according to speed until we are in the required rotation
-                //thisRigidbody.rotation = Quaternion.Slerp(Quaternion.Euler(0, thisRigidbody.rotation.eulerAngles.y, 0), _lookRotation, Time.deltaTime * RotationSpeed);
-                //thisRigidbody.AddForce(transform.forward*Acceleration,ForceMode.Acceleration);
                 transform.rotation = Quaternion.Lerp(transform.rotation, _lookRotation, t * 2);
-                transform.position = Vector3.Lerp(init, path[i].pos, t);
-
-
+                transform.position = Vector3.Lerp(init, NextPos, t);
                 t += currentSpeed * Time.deltaTime;
                 //yield return new WaitForSeconds(.1f);
                 yield return null;
             }
+            }
+            else if(NextCell.group == Group.Intersection){
+                Vector3 v = Current.NextDirection.Translation;
+                NextPos -= (CellSize/2) * v;
+                var initDist = Vector3.Distance(transform.position, NextPos);
+                while (Vector3.Distance(transform.position, NextPos) > ARBITRARY_MIN_DISTANCE)
+                {
+                currentSpeed = MaxSpeed * speedReducer;
+                _direction = (NextPos - transform.position).normalized;
+                _lookRotation = Quaternion.LookRotation(new Vector3(_direction.x, 0, _direction.z));
+                transform.rotation = Quaternion.Lerp(transform.rotation, _lookRotation, t * 2);
+                transform.position = Vector3.Lerp(init, NextPos, t);
+                t += currentSpeed * Time.deltaTime;
+                
+                //yield return new WaitForSeconds(.1f);
+                yield return null;
+                }
+                //TODO: continue if intersection
+                yield return new WaitForSeconds(1f);
+            }
             //transform.position = path[i];
             t = 0;
+            Current = Next;
         }
         yield return new WaitForSeconds(2);
         Destroy(gameObject);
@@ -208,7 +232,12 @@ public class CarBehavior : MonoBehaviour
     }
     void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color.blue;
+        Gizmos.color = Color.black;
         Gizmos.DrawLine(frontCenter, closestPoint);
+        Gizmos.color = Color.red;
+        Gizmos.DrawCube(Current.pos, new Vector3(2.5f,0.1f,2.5f));
+        Gizmos.DrawCube(Next.pos, new Vector3(2.5f,0.1f,2.5f));
+        Gizmos.color = Color.green;
+        Gizmos.DrawLine(transform.position, Next.pos);
     }
 }

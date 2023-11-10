@@ -33,6 +33,7 @@ public class CellHead : MonoBehaviour
     Grid grid;
     Direction testing = Direction.N;
     [SerializeField] GroupHead groupLead;
+    public float CellSize {get{return grid.cellSize.x;}}
     public bool updateOneWayCell(Vector3Int start,Vector3Int end, Direction dir){
         return WereJustUpdatingBothCellsAtOnce(start,dir,end);
     }

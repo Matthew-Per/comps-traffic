@@ -31,6 +31,7 @@ public class PathingCell{
     public PathingCell(Cell c){
         cell = c;
     }
+    
 
 }
 public class IgnoreCellCoord{
