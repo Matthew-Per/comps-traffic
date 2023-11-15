@@ -10,9 +10,3 @@ public class CellConnection{
     //if its inbound Affected is from
     //if its outbound Affect is to
 }
-public enum Group{
-    Road,
-    Intersection,
-    Building,
-    NULL
-}

@@ -30,10 +30,10 @@ public class CarBehavior : MonoBehaviour
     [SerializeField] float speedReducer = 1;
     //public CarBehavior currentTarget;
     public CarBehavior GizmoTarget;
-    BoxCollider detector;
+    bool RightOfWay = false;
     void Awake()
     {
-        transform.Translate(new Vector3(0, YClipPrevention,0));
+        transform.Translate(new Vector3(0, YClipPrevention, 0));
     }
     public void setPath(PathingCell[] path, float maxSpeed = ActualMaxSpeed)
     {
@@ -82,40 +82,43 @@ public class CarBehavior : MonoBehaviour
     {
         while (true)
         {
-            if(!brake){
-            CarBehavior finder = null;
-            var cc = Current.cell.CurrentCars;//should be current cell
-            int thisIndex = cc.IndexOf(this);
-            if (thisIndex > 0)
+            if (!brake)
             {
-                for(int i = thisIndex-1; i >= 0; i--){
-                    if(!cc[i].Equals(this)){
-                        finder = cc[i];
-                        Debug.Log("Found target within cell");
-                        break;
-                    }
-                }
-
-            }
-            else if (path[currentI] != null)
-            {
-                var ccN = path[currentI].cell.CurrentCars;
-                for (int i = ccN.Count - 1; i >= 0; i--)
+                CarBehavior finder = null;
+                var cc = Current.cell.CurrentCars;//should be current cell
+                int thisIndex = cc.IndexOf(this);
+                if (thisIndex > 0)
                 {
-                    if (!ccN[i].Equals(this))
+                    for (int i = thisIndex - 1; i >= 0; i--)
                     {
-                        finder = ccN[i];
-                        Debug.Log("Found target within next cell");
-                        break;
+                        if (!cc[i].Equals(this))
+                        {
+                            finder = cc[i];
+                            Debug.Log("Found target within cell");
+                            break;
+                        }
+                    }
+
+                }
+                else if (path[currentI] != null)
+                {
+                    var ccN = path[currentI].cell.CurrentCars;
+                    for (int i = ccN.Count - 1; i >= 0; i--)
+                    {
+                        if (!ccN[i].Equals(this))
+                        {
+                            finder = ccN[i];
+                            Debug.Log("Found target within next cell");
+                            break;
+                        }
                     }
                 }
-            }
-            if (finder != null)
-            {
-                GizmoTarget = finder;
-                StartCoroutine(CrashPrevention(finder));
-                Debug.Log("Starting Braking");
-            }
+                if (finder != null)
+                {
+                    GizmoTarget = finder;
+                    StartCoroutine(CrashPrevention(finder));
+                    Debug.Log("Starting Braking");
+                }
             }
             yield return null;
         }
@@ -157,7 +160,7 @@ public class CarBehavior : MonoBehaviour
             */
             if (distance > DriverViewDist)
             {
-                
+
                 speedReducer = 1;
                 brake = false;
                 GizmoTarget = null;
@@ -186,41 +189,44 @@ public class CarBehavior : MonoBehaviour
         {
             currentI = i;
             Next = path[i];
-            var NextPos = new Vector3(path[i].pos.x,path[i].pos.y + YClipPrevention, path[i].pos.z);
+            var NextPos = new Vector3(path[i].pos.x, path[i].pos.y + YClipPrevention, path[i].pos.z);
             var NextCell = path[i].cell;
             Vector3 init = transform.position;
-            if(NextCell.group == Group.Road){
-            while (Vector3.Distance(transform.position, NextPos) > ARBITRARY_MIN_DISTANCE)
+            if (NextCell.groupType == GroupEnum.Road)
             {
-                
-                currentSpeed = MaxSpeed * speedReducer;
-                _direction = (NextPos - transform.position).normalized;
-                _lookRotation = Quaternion.LookRotation(new Vector3(_direction.x, 0, _direction.z));
-                transform.rotation = Quaternion.Lerp(transform.rotation, _lookRotation, t * 2);
-                transform.position = Vector3.Lerp(init, NextPos, t);
-                t += currentSpeed * Time.deltaTime;
-                //yield return new WaitForSeconds(.1f);
-                yield return null;
+                while (Vector3.Distance(transform.position, NextPos) > ARBITRARY_MIN_DISTANCE)
+                {
+
+                    currentSpeed = MaxSpeed * speedReducer;
+                    _direction = (NextPos - transform.position).normalized;
+                    _lookRotation = Quaternion.LookRotation(new Vector3(_direction.x, 0, _direction.z));
+                    transform.rotation = Quaternion.Lerp(transform.rotation, _lookRotation, t * 2);
+                    transform.position = Vector3.Lerp(init, NextPos, t);
+                    t += currentSpeed * Time.deltaTime;
+                    //yield return new WaitForSeconds(.1f);
+                    yield return null;
+                }
             }
-            }
-            else if(NextCell.group == Group.Intersection){
+            else if (NextCell.groupType == GroupEnum.Intersection)
+            {
                 Vector3 v = Current.NextDirection.Translation;
-                NextPos -= (CellSize/2) * v;
+                NextPos -= (CellSize / 2) * v;
                 var initDist = Vector3.Distance(transform.position, NextPos);
                 while (Vector3.Distance(transform.position, NextPos) > ARBITRARY_MIN_DISTANCE)
                 {
-                currentSpeed = MaxSpeed * speedReducer;
-                _direction = (NextPos - transform.position).normalized;
-                _lookRotation = Quaternion.LookRotation(new Vector3(_direction.x, 0, _direction.z));
-                transform.rotation = Quaternion.Lerp(transform.rotation, _lookRotation, t * 2);
-                transform.position = Vector3.Lerp(init, NextPos, t);
-                t += currentSpeed * Time.deltaTime;
-                
-                //yield return new WaitForSeconds(.1f);
-                yield return null;
+                    currentSpeed = MaxSpeed * speedReducer;
+                    _direction = (NextPos - transform.position).normalized;
+                    _lookRotation = Quaternion.LookRotation(new Vector3(_direction.x, 0, _direction.z));
+                    transform.rotation = Quaternion.Lerp(transform.rotation, _lookRotation, t * 2);
+                    transform.position = Vector3.Lerp(init, NextPos, t);
+                    t += currentSpeed * Time.deltaTime;
+
+                    //yield return new WaitForSeconds(.1f);
+                    yield return null;
                 }
                 //TODO: continue if intersection
-                yield return new WaitForSeconds(1f);
+                //yield return new WaitForSeconds(1f);
+                yield return RightOfWay;
             }
             //transform.position = path[i];
             t = 0;
@@ -235,8 +241,8 @@ public class CarBehavior : MonoBehaviour
         Gizmos.color = Color.black;
         Gizmos.DrawLine(frontCenter, closestPoint);
         Gizmos.color = Color.red;
-        Gizmos.DrawCube(Current.pos, new Vector3(2.5f,0.1f,2.5f));
-        Gizmos.DrawCube(Next.pos, new Vector3(2.5f,0.1f,2.5f));
+        Gizmos.DrawCube(Current.pos, new Vector3(2.5f, 0.1f, 2.5f));
+        Gizmos.DrawCube(Next.pos, new Vector3(2.5f, 0.1f, 2.5f));
         Gizmos.color = Color.green;
         Gizmos.DrawLine(transform.position, Next.pos);
     }

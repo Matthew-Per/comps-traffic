@@ -17,7 +17,8 @@ public class Cell : MonoBehaviour
     Dictionary<Direction, CellConnection> AllConnections = new Dictionary<Direction, CellConnection>();
     const float clockwiseRotation = 45f;
     const float indicOffset = 1.25f;
-    public Group group = Group.NULL;
+    public Group group;
+    public GroupEnum groupType{get{if(group == null){return GroupEnum.Road;}else{return group.type;}}}
     public bool AlertGroup = false;
 
     [field: SerializeField] public List<CarBehavior> CurrentCars { get; private set; }
@@ -34,14 +35,13 @@ public class Cell : MonoBehaviour
     private void InitiateIntersection()
     {
         Intersection = true;
-        group = Group.Intersection;
-        //Instantiate(debugIntersectionTell,new Vector3(transform.position.x,transform.position.y + indicOffset,transform.position.z),debugIntersectionTell.transform.rotation,transform);
+        //Group gets assigned by GroupHead
+         //Instantiate(debugIntersectionTell,new Vector3(transform.position.x,transform.position.y + indicOffset,transform.position.z),debugIntersectionTell.transform.rotation,transform);
     }
-    public void Setup(Vector3Int position, Group g)
+    public void Setup(Vector3Int position)
     {
         this.CellPosition = position;
         enabled = true;
-        group = g;
     }
     //Outbound should handle the gameobject
     public void addOutboundRoad(Direction d, GameObject indicator, Cell newNeighbor)
@@ -132,14 +132,14 @@ public class Cell : MonoBehaviour
         }
         return returnee.ToArray();
     }
-    public Cell[] GetInbounds()
+    public KeyValuePair<Direction, Cell>[] GetInbounds()
     {
-        List<Cell> returnee = new List<Cell>();
+        List<KeyValuePair<Direction, Cell>> returnee = new List<KeyValuePair<Direction, Cell>>();
         foreach (KeyValuePair<Direction, CellConnection> kvp in AllConnections)
         {
             if (kvp.Value.Inbound)
             {
-                returnee.Add(kvp.Value.Cell);
+                returnee.Add(new KeyValuePair<Direction, Cell>(kvp.Key, kvp.Value.Cell));
             }
         }
         return returnee.ToArray();

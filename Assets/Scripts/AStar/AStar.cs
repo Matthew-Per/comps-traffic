@@ -302,7 +302,7 @@ public class AStar : MonoBehaviour
     private float traversalCost(Vector3Int a, Cell b, ref HashSet<int> CheckedCars)
     {
         float Cost = 0;
-        if (b.group != Group.Building)
+        if (b.groupType != GroupEnum.Building)
         {
             int CarCost = 0;
             int CarCostMultiplier = 3;

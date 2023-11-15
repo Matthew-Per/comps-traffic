@@ -4,7 +4,7 @@ using UnityEngine;
 using System;
 public class GroupHead : MonoBehaviour
 {
-    Dictionary<Cell,GenericNodeGroup> ActiveGroups = new Dictionary<Cell, GenericNodeGroup>();
+    List<Group> ActiveGroups = new List<Group>();
     [SerializeField] CellHead cellLead;
     [SerializeField] Grid grid;
     Dictionary<Vector3Int,GameObject> errorCells = new Dictionary<Vector3Int,GameObject>();
@@ -12,12 +12,7 @@ public class GroupHead : MonoBehaviour
     [SerializeField] GameObject intersectionFab;
     [SerializeField] GameObject roadFab;
     [SerializeField] GameObject buildingFab;
-    public GenericNodeGroup GetGroup(Cell input){
-        if(ActiveGroups.ContainsKey(input)){
-            return ActiveGroups[input];
-        }
-        return null;
-    }
+    /*
     public void UpdateRoad(Cell cell){
         if(ActiveGroups.ContainsKey(cell)){
             return;
@@ -32,20 +27,21 @@ public class GroupHead : MonoBehaviour
         newRoad.AddCell(cell);
         ActiveGroups.Add(cell,newRoad);
     }
+    */
     public void UpdateIntersection(Cell cell){
-        if(ActiveGroups.ContainsKey(cell)){
+        if(ActiveGroups.Contains(cell.group)){
             return;   
         }
         bool adjacentExists = false;
-        IntersectionGroup lastIntersectionAddedTo = null;
+        Group lastIntersectionAddedTo = null;
         Vector3Int[] cardinals = cell.GetCardinals();
         foreach(Vector3Int cI in cardinals){
             Cell card = cellLead.getCell(cI);
             if(card == null){
                 continue;
             }
-            bool activeGroupsContains = ActiveGroups.ContainsKey(card);
-            if(activeGroupsContains && ActiveGroups[card] is IntersectionGroup intersect){
+            if(card.group != null && card.groupType == GroupEnum.Intersection){
+                var intersect = card.group;
                 if(intersect.Equals(lastIntersectionAddedTo)){
                     continue;
                 }
@@ -56,7 +52,6 @@ public class GroupHead : MonoBehaviour
                 adjacentExists = true;
                 intersect.AddCell(cell);
                 lastIntersectionAddedTo = intersect;
-                ActiveGroups.Add(cell,intersect);
                 Vector3Int cellPos = cell.CellPosition;
                 if(errorCells.ContainsKey(cellPos)){
                     Destroy(errorCells[cellPos]);
@@ -84,9 +79,9 @@ public class GroupHead : MonoBehaviour
     }
     private void InstantiateIntersection(Cell cell){
         var go = Instantiate(intersectionFab,cell.transform.position,Quaternion.identity,transform);
-        IntersectionGroup inter = go.GetComponent<IntersectionGroup>();
-        inter.Setup(cell,grid);
-        ActiveGroups.Add(cell,inter);
+        Group inter = go.GetComponent<Group>();
+        inter.IntersectionSetup(cell,grid);
+        ActiveGroups.Add(inter);
         Debug.Log("Setup IntersectionGroup at position: " + cell.CellPosition.ToString());
     }
 }
