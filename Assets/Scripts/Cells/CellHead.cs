@@ -112,7 +112,7 @@ public class CellHead : MonoBehaviour
             GameObject newCell = Instantiate(cellPrefab,grid.CellToWorld(cell),Quaternion.identity,transform);
             newCell.name = cell.ToString();
             Cell cB = newCell.GetComponent<Cell>();
-            cB.Setup(cell,Group.Road);
+            cB.Setup(cell);
             ActiveCells.Add(cell,cB);
             return cB;
     }

@@ -2,12 +2,20 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 public enum GroupEnum{
     Road,
     Intersection,
-    Building,
+    Building
+}
+public enum GroupSpecialization{
+    Yield,
+    Stop,
+    Light,
+    Home,
+    Destination
 }
 public class Group : MonoBehaviour
 {
@@ -26,15 +34,16 @@ public class Group : MonoBehaviour
     public Grid grid;
     Transform theI;
     [SerializeField] GameObject intersectIndicFab;
-
-    [SerializeField] List<Cell> DEBUG_ENDCELLS = new List<Cell>();
-    [SerializeField] List<Cell> DEBUG_MYCELLS = new List<Cell>();
-
     public GroupEnum type{get;private set;}
-    
+    public GroupSpecialization specialization{get;set;}
+    Vector3 Center;
+    BoxCollider Trigger;
+    List<CarBehavior> AwaitingCars = new List<CarBehavior>();
+    List<CarBehavior> currentCars = new List<CarBehavior>();
     void Awake(){
         enabled = false;
         theI = transform.GetChild(0);
+        Trigger = GetComponent<BoxCollider>();
     }
     public void IntersectionSetup(Cell first, Grid grid){
         type = GroupEnum.Intersection;
@@ -56,9 +65,10 @@ public class Group : MonoBehaviour
         else if(unfinished && unfinishedCells.Count == 0){
             CalculateBaseCost();
         }
+        if(AwaitingCars.Count > 0 || currentCars.Count > 0){
+            CarLogic();
+        }
         //TODO: remove
-        DEBUG_MYCELLS = cells;
-        DEBUG_ENDCELLS = endCells;
     }
     private void CalculateBaseCost()
     {
@@ -130,6 +140,7 @@ public class Group : MonoBehaviour
         CalculateBaseCost();
         CalculateLegality(cell.CellPosition);
         MoveCenter();
+        ResizeTrigger();
     }
     private void FindEndCells(Cell newCell){
         if(endCells.Contains(newCell)){
@@ -147,7 +158,8 @@ public class Group : MonoBehaviour
         Vector3 southVec = grid.CellToWorld(new Vector3Int(0,0,south));
         Vector3 westVec = grid.CellToWorld(new Vector3Int(west,0,0));
         Vector3 eastVec = grid.CellToWorld(new Vector3Int(east,0,0));
-        theI.position = new Vector3((westVec.x + eastVec.x)/2,0,(northVec.z + southVec.z)/2);
+        Center = new Vector3((westVec.x + eastVec.x)/2,0,(northVec.z + southVec.z)/2);
+        theI.position = Center;
 
     }
     public void RemoveCell(Cell cell)
@@ -166,21 +178,67 @@ public class Group : MonoBehaviour
             CellsUnfinished.Remove(cellPos);
         }
     }
-    public void UpdateOuts(){
-        endCells = new List<Cell>();
-        foreach(Cell c in cells){
-            var outb = c.GetOutbounds();
-            foreach(var i in outb){
-                if(!cells.Contains(i.Value)){
+    public void UpdateOuts(Cell c){
+        //endCells = new List<Cell>();
+        var GetReal = c.GetOutbounds();
+        endCells.RemoveAll(cell => cell is null);
+            foreach(var i in GetReal){
+                if(!endCells.Contains(i.Value)){
                 var iCell = i.Value;
-                endCells.Add(iCell);                    
+                if(iCell.group == null || !iCell.group.Equals(this)){
+                    endCells.Add(iCell);      
+                }          
                 }
+            }
+    }
+    void ResizeTrigger(){
+        Trigger.center = transform.InverseTransformPoint(Center);
+        Vector3 cSize = Trigger.size;
+        cSize.x = Math.Abs(east+ 1-west) * grid.cellSize.x;
+        cSize.z = Math.Abs(north+ 1  - south) * grid.cellSize.z;
+        if(cSize.x == 0) cSize.x = 2.5f;
+        if(cSize.z == 0) cSize.z = 2.5f;
+        Trigger.size = cSize; 
+    }
+    void OnTriggerEnter(Collider other){
+
+    }
+    void OnTriggerExit(Collider other){
+        var car = other.GetComponent<CarBehavior>();
+        if(car != null){
+            currentCars.Remove(car);
+        }
+    }
+    public void AddCarToQueue(CarBehavior car){
+        if(car != null){
+            AwaitingCars.Add(car);
+        }
+    }
+    void CarLogic(){
+        switch(specialization){
+            case GroupSpecialization.Stop:
+                StopLogic();
+            break;
+
+        }
+    }
+    void StopLogic(){
+        if(AwaitingCars.Count > 0){
+            if(currentCars.Count == 0){
+                var nextCar = AwaitingCars[0];
+                currentCars.Add(nextCar);
+                nextCar.RightOfWay = true;
+                AwaitingCars.Remove(nextCar);
             }
         }
     }
     void OnDrawGizmosSelected(){
-        Gizmos.color = Color.white;
+        /*Gizmos.color = Color.white;
         foreach(Cell cell in cells){
+            Gizmos.DrawWireCube(cell.transform.position, grid.cellSize);
+        }*/
+        Gizmos.color = Color.yellow;
+        foreach(Cell cell in endCells){
             Gizmos.DrawWireCube(cell.transform.position, grid.cellSize);
         }
     }

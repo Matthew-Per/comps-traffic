@@ -64,6 +64,6 @@ public class MakePath : MonoBehaviour
     void Debug10Cars(PathingCell[] path){
         var ob = Instantiate(debugCarSpawner,path[0].pos,Quaternion.identity);
         var cS = ob.GetComponent<CarStorage>();
-        cS.Setup(10,path,maxSpeed);
+        cS.Setup(1,path,maxSpeed);
     }
 }

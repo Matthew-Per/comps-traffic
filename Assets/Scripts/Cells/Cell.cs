@@ -51,6 +51,9 @@ public class Cell : MonoBehaviour
         roadObjects[d].name = d.ToString();
         roadObjects[d].transform.Rotate(new Vector3(0, d.Index * clockwiseRotation, 0));
         ChangeOutbound(d, newNeighbor);
+        if(group != null){
+            group.UpdateOuts(this);
+        }
         /*
         if(!AllConnections.ContainsKey(d.Opposing())){
             DivergingRoads++;
@@ -72,6 +75,9 @@ public class Cell : MonoBehaviour
         if (checkIfIntersection())
         {
             InitiateIntersection();
+        }
+        if(group != null){
+            group.UpdateOuts(this);
         }
     }
     private bool checkIfIntersection()
@@ -152,6 +158,18 @@ public class Cell : MonoBehaviour
         returnee[2] = CellPosition + Direction.S.Translation;
         returnee[3] = CellPosition + Direction.W.Translation;
         return returnee;
+    }
+    public Vector3Int[] GetPossbleNeighbors(){
+        return new Vector3Int[8]{
+            CellPosition += Direction.N.Translation,
+            CellPosition += Direction.NE.Translation,
+            CellPosition += Direction.E.Translation,
+            CellPosition += Direction.SE.Translation,
+            CellPosition += Direction.S.Translation,
+            CellPosition += Direction.SW.Translation,
+            CellPosition += Direction.W.Translation,
+            CellPosition += Direction.NW.Translation
+        };
     }
 
     /*public Dictionary<Direction, Vector3Int> getConnections(){

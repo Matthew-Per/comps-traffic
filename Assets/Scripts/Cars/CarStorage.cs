@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class CarStorage : MonoBehaviour
@@ -11,6 +12,7 @@ public class CarStorage : MonoBehaviour
     [SerializeField] GameObject carP;
     public PathingCell[] Path {get;private set;} 
     PathingCell StartCell;
+    List<CarBehavior> CarList = new List<CarBehavior>();
 
     // Start is called before the first frame update
     void Start()
@@ -33,8 +35,15 @@ public class CarStorage : MonoBehaviour
             c.transform.eulerAngles = new Vector3(0,initRot,0);
             CarBehavior carB = c.GetComponent<CarBehavior>();
             carB.setPath(Path,CarSpeed);
+            CarList.Add(carB);
             CurrentCars++;
             Occupied = true;
+        }
+        for(int i = 0; i < CarList.Count;i++){
+            if(CarList[i] == null){
+                CarList.RemoveAt(i);
+                CurrentCars--;
+            }
         }
     }
     void OnTriggerEnter(){
