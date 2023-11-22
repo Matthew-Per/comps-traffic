@@ -313,12 +313,12 @@ public class AStar : MonoBehaviour
                 if (CheckedCars.Add(id))
                 {
                     CarCost += CarCostMultiplier;
-                    Debug.Log("worked");
+                    //Debug.Log("worked");
                 }
             }
             Cost += CarCost;
         }
-        Debug.Log("traversal cost from: "+ a.ToString() + " to " + b.CellPosition.ToString() + ": " + Cost);
+        //Debug.Log("traversal cost from: "+ a.ToString() + " to " + b.CellPosition.ToString() + ": " + Cost);
         return Cost;
     }
     private float cellHeuristic(Vector3Int a, Vector3Int b)

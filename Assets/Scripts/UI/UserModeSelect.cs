@@ -1,10 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using Unity.VisualScripting;
 using UnityEngine;
-public enum UserMode{
+public enum UserMode
+{
     Road,
-    Path
+    Path,
+    UI
 }
 
 public class UserModeSelect : MonoBehaviour
@@ -19,17 +22,51 @@ public class UserModeSelect : MonoBehaviour
     GameObject selector;
     [SerializeField]
     Material[] materials;
-    public void setToRoad(){
-        mode = UserMode.Road;
-        pathDirector.SetActive(false);
-        roadDirector.SetActive(true);
+    bool pathState = false;
+    bool roadState = true;
+    bool selectState = false;
+    UserMode prevMode;
+    public void setToRoad()
+    {
+        pathState = false;
+        selectState = false;
+        roadState = true;
         selector.GetComponent<Renderer>().material = materials[0];
-        
+        prevMode = UserMode.Road;
+        if(mode != UserMode.UI){
+            mode = UserMode.Road;
+            pathDirector.SetActive(pathState);
+            roadDirector.SetActive(roadState);
+        }
+
+
     }
-    public void setToPath(){
-        mode = UserMode.Path;
-        roadDirector.SetActive(false);
-        pathDirector.SetActive(true);
+    public void setToPath()
+    {
+        pathState = true;
+        roadState = false;
+        selectState = false;
+        prevMode = UserMode.Path;
         selector.GetComponent<Renderer>().material = materials[1];
+        if (mode != UserMode.UI)
+        {
+            mode = UserMode.Path;
+            roadDirector.SetActive(roadState);
+            pathDirector.SetActive(pathState);
+        }
+
+    }
+    public void OnUIHover()
+    {
+        prevMode = mode;
+        mode = UserMode.UI;
+        roadDirector.SetActive(false);
+        pathDirector.SetActive(false);
+    }
+    public void OnUIExit()
+    {
+        mode = prevMode;
+        roadDirector.SetActive(roadState);
+        pathDirector.SetActive(pathState);
     }
 }

@@ -168,7 +168,7 @@ public class CarBehavior : MonoBehaviour
                 
             }
             */
-            if (distance > DriverViewDist)
+            if (distance >= DriverViewDist)
             {
                 StopBrake();
                 yield break;
