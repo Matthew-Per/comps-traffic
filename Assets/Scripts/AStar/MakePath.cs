@@ -1,3 +1,4 @@
+/*
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -67,3 +68,4 @@ public class MakePath : MonoBehaviour
         cS.Setup(1,path,maxSpeed);
     }
 }
+*/

@@ -288,6 +288,52 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 16785580}
   m_CullTransparentMesh: 1
+--- !u!1 &43519512
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 43519513}
+  - component: {fileID: 43519514}
+  m_Layer: 0
+  m_Name: AStarAlwaysActive
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &43519513
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 43519512}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &43519514
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 43519512}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f04052eb3ec00254da6b6a780ff9ba11, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cellHead: {fileID: 1579496309}
+  CellPath: []
 --- !u!1 &82884292
 GameObject:
   m_ObjectHideFlags: 0
@@ -3641,7 +3687,7 @@ MonoBehaviour:
   grid: {fileID: 2134492918}
   hiddenFollowerFollower: {fileID: 725359749}
   cellLeader: {fileID: 1579496309}
-  aStar: {fileID: 1640687493}
+  aStar: {fileID: 0}
 --- !u!4 &1042517518
 Transform:
   m_ObjectHideFlags: 0
@@ -5266,29 +5312,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1640687494}
-  - component: {fileID: 1640687493}
   - component: {fileID: 1640687495}
   m_Layer: 0
-  m_Name: FinderOfPath
+  m_Name: CreatorOfBuilds
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 0
---- !u!114 &1640687493
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1640687492}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f04052eb3ec00254da6b6a780ff9ba11, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cellHead: {fileID: 1579496309}
-  CellPath: []
 --- !u!4 &1640687494
 Transform:
   m_ObjectHideFlags: 0
@@ -5313,17 +5344,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 1640687492}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0f635e0cc35beea4b9aafb285c5d3a2a, type: 3}
+  m_Script: {fileID: 11500000, guid: 27277b8885b61f6479af0e4240b76f18, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   grid: {fileID: 2134492918}
-  selector: {fileID: 2554808214076825219}
+  selector: {fileID: 3552623520513890730}
   cellLead: {fileID: 1579496309}
-  aStar: {fileID: 1640687493}
-  maxSpeed: 5
-  minSpeed: 0.1
-  debugCar: {fileID: 9122328846991822449, guid: 6f8440a5659d03a43b0d1924955fe4b4, type: 3}
-  debugCarSpawner: {fileID: 9122328846991822449, guid: 1d949bc8ac235b049abdc10046117f46, type: 3}
+  aStar: {fileID: 43519514}
+  carFab: {fileID: 9122328846991822449, guid: 6f8440a5659d03a43b0d1924955fe4b4, type: 3}
+  PossibleChoiceFab: {fileID: 4228019850878364134, guid: 611d2987285a82646be7051fba362afa, type: 3}
 --- !u!1 &1735810728
 GameObject:
   m_ObjectHideFlags: 0
@@ -7181,3 +7210,4 @@ SceneRoots:
   - {fileID: 1394158563}
   - {fileID: 725359751}
   - {fileID: 190896216}
+  - {fileID: 43519513}

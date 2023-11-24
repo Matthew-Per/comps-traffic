@@ -27,6 +27,12 @@ public class Cell : MonoBehaviour
     const int CarLayer = 3;
     //if directions >2 become intersection
     //int DivergingRoads = 0;
+    public static bool operator ==(Cell a, Cell b){
+        return a.CellPosition == b.CellPosition;
+    }
+    public static bool operator !=(Cell a, Cell b){
+        return a.CellPosition != b.CellPosition;
+    }
     void Start()
     {
         CurrentCars = new List<CarBehavior>();

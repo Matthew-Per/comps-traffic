@@ -14,6 +14,8 @@ public class Direction{
     public static readonly Direction SW = new Direction("SW",new Vector3Int(-1,0,-1),5);
     public static readonly Direction W = new Direction("W",new Vector3Int(-1,0,0),6);
     public static readonly Direction NW = new Direction("NW",new Vector3Int(-1,0,1),7);
+
+    public static readonly Direction[] Directions = new Direction[]{N,NE,E,SE,S,SW,W,NW};
     protected Direction(string name, Vector3Int translation, int index){
         Name = name;
         Translation = translation;

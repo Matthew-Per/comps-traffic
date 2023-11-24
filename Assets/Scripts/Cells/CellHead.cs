@@ -37,6 +37,9 @@ public class CellHead : MonoBehaviour
     public bool updateOneWayCell(Vector3Int start,Vector3Int end, Direction dir){
         return WereJustUpdatingBothCellsAtOnce(start,dir,end);
     }
+    public bool CreateBuiding(Vector3Int start, Vector3Int end, Direction startExit, Direction startEntrance, Direction endEntrance, Direction endExit){
+        throw new NotImplementedException();
+    }
     public void updateCells(Vector3Int start,Vector3Int end, Direction startDir,Direction endDir){
         cellUpdate(start,startDir,end);
         cellUpdate(end,endDir,start);

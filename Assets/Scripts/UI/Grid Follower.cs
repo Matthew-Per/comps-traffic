@@ -23,4 +23,17 @@ public class GridFollower : MonoBehaviour
     public Vector3Int getGridPos(){
         return gridPos;
     }
+    public Vector3Int OverrideStopForPos(){
+        Vector3 mouseTemp;
+        mouseTemp = new Vector3(Input.mousePosition.x,Input.mousePosition.y,Camera.main.transform.position.y-1);
+        mouseTemp = Camera.main.ScreenToWorldPoint(mouseTemp);
+        mouseTemp = new Vector3(mouseTemp.x + GridOffset.x,0,mouseTemp.z+GridOffset.z);
+        return grid.WorldToCell(mouseTemp);
+    }
+    public void Stop(){
+        this.enabled = false;
+    }
+    public void Start(){
+        this.enabled = true;
+    }
 }

@@ -33,19 +33,42 @@ public class CarBehavior : MonoBehaviour
     public CarBehavior GizmoTarget;
     public bool RightOfWay = false;
     bool IntersectIgnore = false;
+    [SerializeField] AStar pathfinder;
     void Awake()
     {
         transform.Translate(new Vector3(0, YClipPrevention, 0));
+        enabled = false;
     }
-    public void setPath(PathingCell[] path, float maxSpeed = ActualMaxSpeed)
+    public void Setup(AStar a){
+        pathfinder = a;
+        this.enabled = true;
+    }
+    public void setPath(PathingCell[] path , float maxSpeed = ActualMaxSpeed)
     {
+        if(enabled == false){
+            throw new Exception("Car needs AStar to pathfind autonomously!");
+        }
         MaxSpeed = maxSpeed;
         this.path = path;
         StartCoroutine(Go());
         StartCoroutine(TargetSearch());
         //.25seconds is average human reaction
     }
-    /*
+    public IEnumerator setTarget(Vector3Int start,Vector3Int target, float maxSpeed = ActualMaxSpeed){
+        if(enabled == false){
+            throw new Exception("Car needs AStar to pathfind autonomously!");
+        }
+        PathingCell[] constructedPath = null;
+        while(constructedPath == null){
+            constructedPath = pathfinder.CompleteCoAstar(start,target);
+            yield return null;
+        }
+        MaxSpeed = maxSpeed;
+        this.path = constructedPath;
+        StartCoroutine(Go());
+        StartCoroutine(TargetSearch());
+        
+    }    /*
     void OnTriggerEnter(Collider collider)
     {
         if (collider.CompareTag("Hitbox"))
