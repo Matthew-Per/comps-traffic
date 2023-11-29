@@ -4,7 +4,7 @@ using UnityEngine;
 using System;
 public class GroupHead : MonoBehaviour
 {
-    List<Group> ActiveGroups = new List<Group>();
+    List<Intersection> ActiveGroups = new List<Intersection>();
     [SerializeField] CellHead cellLead;
     [SerializeField] Grid grid;
     Dictionary<Vector3Int,GameObject> errorCells = new Dictionary<Vector3Int,GameObject>();
@@ -33,7 +33,7 @@ public class GroupHead : MonoBehaviour
             return;   
         }
         bool adjacentExists = false;
-        Group lastIntersectionAddedTo = null;
+        Intersection lastIntersectionAddedTo = null;
         Vector3Int[] cardinals = cell.GetCardinals();
         foreach(Vector3Int cI in cardinals){
             Cell card = cellLead.getCell(cI);
@@ -79,7 +79,7 @@ public class GroupHead : MonoBehaviour
     }
     private void InstantiateIntersection(Cell cell){
         var go = Instantiate(intersectionFab,cell.transform.position,Quaternion.identity,transform);
-        Group inter = go.GetComponent<Group>();
+        Intersection inter = go.GetComponent<Intersection>();
         inter.IntersectionSetup(cell,grid);
         inter.specialization = GroupSpecialization.Stop;
         ActiveGroups.Add(inter);

@@ -17,8 +17,9 @@ public class Cell : MonoBehaviour
     Dictionary<Direction, CellConnection> AllConnections = new Dictionary<Direction, CellConnection>();
     const float clockwiseRotation = 45f;
     const float indicOffset = 1.25f;
-    public Group group;
-    public GroupEnum groupType{get{if(group == null){return GroupEnum.Road;}else{return group.type;}}}
+    public Intersection group = null;
+    public GroupEnum type = GroupEnum.Road;
+    public GroupEnum groupType{get{if(group == null){return type;}else{return group.type;}}}
     public bool AlertGroup = false;
 
     [field: SerializeField] public List<CarBehavior> CurrentCars { get; private set; }

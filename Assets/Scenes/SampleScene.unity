@@ -5353,6 +5353,8 @@ MonoBehaviour:
   aStar: {fileID: 43519514}
   carFab: {fileID: 9122328846991822449, guid: 6f8440a5659d03a43b0d1924955fe4b4, type: 3}
   PossibleChoiceFab: {fileID: 4228019850878364134, guid: 611d2987285a82646be7051fba362afa, type: 3}
+  homeFab: {fileID: 7304294964342682085, guid: cb82154b0b8a7c14db24befe9cabf49b, type: 3}
+  destFab: {fileID: 3657341671392140995, guid: e7c62610b0ae05e45878b5cb5376cd98, type: 3}
 --- !u!1 &1735810728
 GameObject:
   m_ObjectHideFlags: 0
