@@ -80,6 +80,7 @@ public class AStar : MonoBehaviour
         AStarCoord curr;
         if (!cellHead.hasCell(start) || !cellHead.hasCell(finish))
         {
+            Debug.LogError("Cells do not exist!");
             yield break;
         }
         if (finishedPaths.ContainsKey(VectorsToKeys(start, finish)))
@@ -107,8 +108,8 @@ public class AStar : MonoBehaviour
             foreach (KeyValuePair<Direction, Cell> kvp in OutNeighbors)
             {
                 Cell neighbor = kvp.Value;
-                Debug.Log(neighbor);
-                Debug.Log("Cell " +neighbor +" has cars of Count: " + neighbor.CarCount + "and list size of: " + neighbor.CurrentCars.Count);
+                //Debug.Log(neighbor);
+                //Debug.Log("Cell " +neighbor +" has cars of Count: " + neighbor.CarCount + "and list size of: " + neighbor.CurrentCars.Count);
                 Vector3Int neighborPos = neighbor.CellPosition;
                 Direction dir = kvp.Key;
                 if (closed.Contains(neighborPos))
@@ -132,6 +133,7 @@ public class AStar : MonoBehaviour
             }
             yield return null;
         }
+        Debug.LogError("Path not found!");
         yield break;
     }
     public IEnumerator AStarCells(Vector3Int start, Vector3Int finish)

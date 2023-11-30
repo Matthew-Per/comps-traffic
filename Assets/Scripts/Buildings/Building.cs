@@ -25,7 +25,9 @@ public class Building : MonoBehaviour
     {
         this.pathfinder = a;
         home = s;
+        home.build = this;
         dest = d;
+        dest.build = this;
         enabled = true;
     }
 

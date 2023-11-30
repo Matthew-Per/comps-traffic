@@ -43,7 +43,7 @@ public class Direction{
     {
         return @enum.Index;
     }
-    public Direction Opposing(){
+    public Direction Opposite{get{
             switch(Index){
             case 0: return Direction.S;
             case 1: return Direction.SW;
@@ -55,7 +55,7 @@ public class Direction{
             case 7: return Direction.SE;
             default: throw new ArgumentOutOfRangeException(Index.ToString() + " has no registered direction");
         }
-    }
+    }}
     public static implicit operator string(Direction @enum)
     {
         return @enum.Name;

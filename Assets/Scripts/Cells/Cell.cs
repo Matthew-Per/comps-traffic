@@ -17,10 +17,27 @@ public class Cell : MonoBehaviour
     Dictionary<Direction, CellConnection> AllConnections = new Dictionary<Direction, CellConnection>();
     const float clockwiseRotation = 45f;
     const float indicOffset = 1.25f;
-    public Intersection group = null;
-    public GroupEnum type = GroupEnum.Road;
-    public GroupEnum groupType{get{if(group == null){return type;}else{return group.type;}}}
-    public bool AlertGroup = false;
+    public Intersection intersect = null;
+    public Building build = null;
+    public GroupEnum groupType
+    {
+        get
+        {
+            if (intersect != null)
+            {
+                return GroupEnum.Intersection;
+            }
+            else if (build != null)
+            {
+                return GroupEnum.Building;
+            }
+            else
+            {
+                return GroupEnum.Road;
+            }
+        }
+    }
+    [SerializeField] GameObject indicator;
 
     [field: SerializeField] public List<CarBehavior> CurrentCars { get; private set; }
 
@@ -28,12 +45,6 @@ public class Cell : MonoBehaviour
     const int CarLayer = 3;
     //if directions >2 become intersection
     //int DivergingRoads = 0;
-    public static bool operator ==(Cell a, Cell b){
-        return a.CellPosition == b.CellPosition;
-    }
-    public static bool operator !=(Cell a, Cell b){
-        return a.CellPosition != b.CellPosition;
-    }
     void Start()
     {
         CurrentCars = new List<CarBehavior>();
@@ -43,7 +54,7 @@ public class Cell : MonoBehaviour
     {
         Intersection = true;
         //Group gets assigned by GroupHead
-         //Instantiate(debugIntersectionTell,new Vector3(transform.position.x,transform.position.y + indicOffset,transform.position.z),debugIntersectionTell.transform.rotation,transform);
+        //Instantiate(debugIntersectionTell,new Vector3(transform.position.x,transform.position.y + indicOffset,transform.position.z),debugIntersectionTell.transform.rotation,transform);
     }
     public void Setup(Vector3Int position)
     {
@@ -51,15 +62,16 @@ public class Cell : MonoBehaviour
         enabled = true;
     }
     //Outbound should handle the gameobject
-    public void addOutboundRoad(Direction d, GameObject indicator, Cell newNeighbor)
+    public void addOutboundRoad(Direction d, Cell newNeighbor)
     {
         Vector3 offset = offsetFinder(d);
         roadObjects[d] = Instantiate(indicator, transform.position + offset, indicator.transform.rotation, transform);
         roadObjects[d].name = d.ToString();
         roadObjects[d].transform.Rotate(new Vector3(0, d.Index * clockwiseRotation, 0));
         ChangeOutbound(d, newNeighbor);
-        if(group != null){
-            group.UpdateOuts(this);
+        if (intersect != null)
+        {
+            intersect.UpdateOuts(this);
         }
         /*
         if(!AllConnections.ContainsKey(d.Opposing())){
@@ -83,8 +95,9 @@ public class Cell : MonoBehaviour
         {
             InitiateIntersection();
         }
-        if(group != null){
-            group.UpdateOuts(this);
+        if (intersect != null)
+        {
+            intersect.UpdateOuts(this);
         }
     }
     private bool checkIfIntersection()
@@ -116,13 +129,11 @@ public class Cell : MonoBehaviour
     {
         CellConnection newOut = new CellConnection(newConnection, false);
         AllConnections[d] = newOut;
-        AlertGroup = true;
     }
     private void ChangeInbound(Direction d, Cell newConnection)
     {
         CellConnection newIn = new CellConnection(newConnection, true);
         AllConnections[d] = newIn;
-        AlertGroup = true;
     }
     public ReadOnlyDictionary<Direction, CellConnection> GetConnections()
     {
@@ -166,7 +177,8 @@ public class Cell : MonoBehaviour
         returnee[3] = CellPosition + Direction.W.Translation;
         return returnee;
     }
-    public Vector3Int[] GetPossbleNeighbors(){
+    public Vector3Int[] GetPossbleNeighbors()
+    {
         return new Vector3Int[8]{
             CellPosition += Direction.N.Translation,
             CellPosition += Direction.NE.Translation,

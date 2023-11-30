@@ -45,8 +45,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 337a5553f65a2b44dbd90080985093a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  group: 3
-  AlertGroup: 0
+  intersect: {fileID: 0}
+  build: {fileID: 0}
+  indicator: {fileID: 8074014826674725754, guid: 7cce676082a489745981cfda7e840a23, type: 3}
+  <CurrentCars>k__BackingField: []
+  CarCount: 0
 --- !u!65 &6109210082270622255
 BoxCollider:
   m_ObjectHideFlags: 0

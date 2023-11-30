@@ -32,7 +32,6 @@ public class CarBehavior : MonoBehaviour
     //public CarBehavior currentTarget;
     public CarBehavior GizmoTarget;
     public bool RightOfWay = false;
-    bool IntersectIgnore = false;
     [SerializeField] AStar pathfinder;
     void Awake()
     {
@@ -108,7 +107,7 @@ public class CarBehavior : MonoBehaviour
         Coroutine CurrentBrake = null;
         while (true)
         {
-            if (!brake || !IntersectIgnore)
+            if (!brake)
             {
                 CarBehavior finder = null;
                 var cc = Current.cell.CurrentCars;//should be current cell
@@ -119,9 +118,21 @@ public class CarBehavior : MonoBehaviour
                     {
                         if (!cc[i].Equals(this))
                         {
-                            finder = cc[i];
+                            if(RightOfWay){
+                                if(cc[i].RightOfWay){
+                                    finder = cc[i];
+                                    break;
+                                }
+                                else{
+                                    //keep going if in intersection and other car is not in intersection
+                                }
+                            }
+                            else{
+                                finder = cc[i];
+                                break;
+                            }
                             //Debug.Log("Found target within cell");
-                            break;
+                            
                         }
                     }
 
@@ -133,7 +144,17 @@ public class CarBehavior : MonoBehaviour
                     {
                         if (!ccN[i].Equals(this))
                         {
+                            if(RightOfWay){
+                                if(ccN[i].RightOfWay){
+                                    finder = ccN[i];
+                                }
+                                else{
+                                    //see previous if
+                                }
+                            }
+                            else{
                             finder = ccN[i];
+                            }
                             //Debug.Log("Found target within next cell");
                             break;
                         }
@@ -145,10 +166,6 @@ public class CarBehavior : MonoBehaviour
                     CurrentBrake = StartCoroutine(CrashPrevention(finder));
                     //Debug.Log("Starting Braking");
                 }
-            }
-            else if(IntersectIgnore && CurrentBrake != null){
-                StopCoroutine(CurrentBrake);
-                StopBrake();
             }
             yield return null;
         }
@@ -180,6 +197,14 @@ public class CarBehavior : MonoBehaviour
             catch (Exception e)
             {
                 StopBrake();
+                yield break;
+            }
+            Vector3 thisToTarget = target.transform.position - transform.position;
+            float dotProduct = Vector3.Dot(transform.forward,thisToTarget.normalized);
+            if(dotProduct < 0){
+                Debug.Log("Target is behind this car!");
+                StopBrake();
+                yield return new WaitForSeconds(.2f);
                 yield break;
             }
             float distance = Vector3.Distance(frontCenter, closestPoint);
@@ -229,7 +254,6 @@ public class CarBehavior : MonoBehaviour
             }
             else
             {
-                IntersectIgnore = false;
                 if (NextCell.groupType == GroupEnum.Road)
                 {
                     if (RightOfWay && Current.cell.groupType != GroupEnum.Intersection)
@@ -257,8 +281,7 @@ public class CarBehavior : MonoBehaviour
                         }
                         //TODO: continue if intersection
                         //yield return new WaitForSeconds(.5f);
-                        NextCell.group.AddCarToQueue(this);
-                        IntersectIgnore = true;
+                        NextCell.intersect.AddCarToQueue(this);
                         while (!RightOfWay)
                         {
                             yield return null;

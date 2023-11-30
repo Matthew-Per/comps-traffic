@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
@@ -28,8 +29,6 @@ public class CellHead : MonoBehaviour
     [SerializeField]
     GameObject cellPrefab; 
     [SerializeField]
-    GameObject debugArrow;
-    [SerializeField]
     Grid grid;
     Direction testing = Direction.N;
     [SerializeField] GroupHead groupLead;
@@ -37,14 +36,51 @@ public class CellHead : MonoBehaviour
     public bool updateOneWayCell(Vector3Int start,Vector3Int end, Direction dir){
         return WereJustUpdatingBothCellsAtOnce(start,dir,end);
     }
-    public Cell[] CreateBuiding(Vector3Int start, Vector3Int end, Direction startExit, Direction startEntrance, Direction endEntrance, Direction endExit){
+    /// <summary>
+    /// Sets up cells for a building and the building itself, Requires AStar in order to setup building
+    /// </summary>
+    /// <param name="start"></param>
+    /// <param name="end"></param>
+    /// <param name="startExit"></param>
+    /// <param name="startEntrance"></param>
+    /// <param name="endEntrance"></param>
+    /// <param name="endExit"></param>
+    /// <param name="build"></param>
+    /// <returns></returns>
+    /// <exception cref="Exception"></exception>
+    public void CreateBuiding(Vector3Int start, Vector3Int end, Direction startExit, Direction startEntrance, Direction endEntrance, Direction endExit, Building build, AStar a){
         if(hasCell(start) || hasCell(end)){
-            return null;
+            throw new InvalidOperationException("Cannot overwrite cells with houses");
         }
         Cell home = InstantiateCell(start);
-        home.type = GroupEnum.Building;
-        Cell dest = InstantiateCell(start);
-        dest.type = GroupEnum.Building;
+        Cell dest = InstantiateCell(end);
+        Vector3Int HEXP = start + startExit.Translation;
+        Vector3Int HENP = start - startEntrance.Translation;
+        Cell HEXC = getCell(HEXP);
+        if(HEXC == null){throw new Exception("elp home exit");}
+        Cell HENC =  getCell(HENP);
+        if(HENC == null){throw new Exception("elp home entrance");}
+        Vector3Int DEXP = end + endExit.Translation;
+        Vector3Int DENP = end - endEntrance.Translation;
+        Cell DEXC = getCell(DEXP);
+        if(DEXC == null){throw new Exception("elp dest exit");}
+        Cell DENC = getCell(DENP);
+        if(DENC == null){throw new Exception("elp dest entrance");}
+        Debug.Log(startExit.ToString()+","+startEntrance.ToString()+","+endExit.ToString()+","+endEntrance.ToString());
+        home.addOutboundRoad(startExit, HEXC);
+        HENC.addOutboundRoad(startEntrance,home);
+        home.addInboundRoad(startEntrance.Opposite,HENC);
+        HEXC.addInboundRoad(startExit.Opposite,home);
+
+        dest.addOutboundRoad(endExit,DEXC);
+        DENC.addOutboundRoad(endEntrance,dest);
+        dest.addInboundRoad(endEntrance,DENC);
+        DEXC.addInboundRoad(endExit,dest);
+        build.Setup(a,home,dest);
+        if(HENC.Intersection) groupLead.UpdateIntersection(HENC);
+        if(HEXC.Intersection) groupLead.UpdateIntersection(HEXC);
+        if(DENC.Intersection) groupLead.UpdateIntersection(DENC);
+        if(DEXC.Intersection) groupLead.UpdateIntersection(DEXC);
     }
     public void updateCells(Vector3Int start,Vector3Int end, Direction startDir,Direction endDir){
         cellUpdate(start,startDir,end);
@@ -71,8 +107,8 @@ public class CellHead : MonoBehaviour
         else{
             cBE = InstantiateCell(end);
         }
-        cBS.addOutboundRoad(dir,debugArrow,cBE);
-        cBE.addInboundRoad(dir.Opposing(),cBS); 
+        cBS.addOutboundRoad(dir,cBE);
+        cBE.addInboundRoad(dir.Opposite,cBS); 
         if(cBS.Intersection){
             groupLead.UpdateIntersection(cBS);
         }

@@ -26,7 +26,7 @@ public class Intersection : MonoBehaviour
     private int west { get { return edges[3]; } set { edges[3] = value; } }
     HashSet<Vector3Int> cellPoses = new HashSet<Vector3Int>();
     public float Cost { get; protected set; }
-    public List<Cell> cells { get; protected set; } = new List<Cell>();
+    [field:SerializeField]public List<Cell> cells { get; protected set; } = new List<Cell>();
     public List<Cell> endCells { get; protected set; } = new List<Cell>();
     [SerializeField] private List<Vector3Int> unfinishedCells;
     public List<Vector3Int> CellsUnfinished { get { return unfinishedCells; } private set { unfinishedCells = value; } }
@@ -156,7 +156,7 @@ public class Intersection : MonoBehaviour
         var go = Instantiate(intersectIndicFab, cell.transform.position, Quaternion.identity, transform);
         cellPoses.Add(cell.CellPosition);
 
-        cell.group = this;
+        cell.intersect = this;
 
         FindEndCells(cell);
         CalculateBaseCost();
@@ -216,7 +216,7 @@ public class Intersection : MonoBehaviour
             if (!endCells.Contains(i.Value))
             {
                 var iCell = i.Value;
-                if (iCell.group == null || !iCell.group.Equals(this))
+                if (iCell.intersect == null || !iCell.intersect.Equals(this))
                 {
                     endCells.Add(iCell);
                 }
