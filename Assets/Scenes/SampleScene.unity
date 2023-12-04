@@ -5350,6 +5350,7 @@ MonoBehaviour:
   selector: {fileID: 3552623520513890730}
   cellLead: {fileID: 1579496309}
   aStar: {fileID: 43519514}
+  cState: 0
   carFab: {fileID: 9122328846991822449, guid: 6f8440a5659d03a43b0d1924955fe4b4, type: 3}
   PossibleChoiceFab: {fileID: 4228019850878364134, guid: 611d2987285a82646be7051fba362afa, type: 3}
   homeFab: {fileID: 7304294964342682085, guid: cb82154b0b8a7c14db24befe9cabf49b, type: 3}

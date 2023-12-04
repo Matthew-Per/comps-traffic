@@ -60,6 +60,7 @@ public class CellHead : MonoBehaviour
         if(HEXC == null){throw new Exception("elp home exit");}
         Cell HENC =  getCell(HENP);
         if(HENC == null){throw new Exception("elp home entrance");}
+        //TODO:
         Vector3Int DEXP = end + endExit.Translation;
         Vector3Int DENP = end - endEntrance.Translation;
         Cell DEXC = getCell(DEXP);
@@ -71,11 +72,10 @@ public class CellHead : MonoBehaviour
         HENC.addOutboundRoad(startEntrance,home);
         home.addInboundRoad(startEntrance.Opposite,HENC);
         HEXC.addInboundRoad(startExit.Opposite,home);
-
         dest.addOutboundRoad(endExit,DEXC);
         DENC.addOutboundRoad(endEntrance,dest);
         dest.addInboundRoad(endEntrance,DENC);
-        DEXC.addInboundRoad(endExit,dest);
+        DEXC.addInboundRoad(endExit.Opposite,dest);
         build.Setup(a,home,dest);
         if(HENC.Intersection) groupLead.UpdateIntersection(HENC);
         if(HEXC.Intersection) groupLead.UpdateIntersection(HEXC);

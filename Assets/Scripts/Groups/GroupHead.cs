@@ -148,7 +148,7 @@ public class GroupHead : MonoBehaviour
         var go = Instantiate(intersectionFab, cell.transform.position, Quaternion.identity, transform);
         Intersection inter = go.GetComponent<Intersection>();
         inter.IntersectionSetup(cell, grid);
-        inter.specialization = GroupSpecialization.Stop;
+        inter.specialization = GroupSpecialization.Yield;//TODO: remove debug
         ActiveGroups.Add(inter);
         Debug.Log("Setup IntersectionGroup at position: " + cell.CellPosition.ToString());
     }

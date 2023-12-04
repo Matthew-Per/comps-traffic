@@ -16,8 +16,7 @@ public class UserModeSelect : MonoBehaviour
     UserMode mode = UserMode.Road;
     [SerializeField]
     GameObject roadDirector;
-    [SerializeField]
-    GameObject pathDirector;
+    [SerializeField] GameObject pathDirector;
     [SerializeField]
     GameObject selector;
     [SerializeField]

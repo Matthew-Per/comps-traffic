@@ -11,7 +11,7 @@ using Unity.VisualScripting.FullSerializer;
 
 public class CarBehavior : MonoBehaviour
 {
-    [SerializeField]
+    [field:SerializeField]
     PathingCell[] path = null;
     const float ARBITRARY_MIN_DISTANCE = 0.35f;
     const float ActualMaxSpeed = 1f;
@@ -24,22 +24,26 @@ public class CarBehavior : MonoBehaviour
     [SerializeField] bool eBrake = false;
     public float RotationSpeed;
     int currentI = 0;
-    PathingCell Current;
-    PathingCell Next;
+    public PathingCell Current;
+    public PathingCell IntersectionEntranceCell;
+    public PathingCell Next;
     float currentSpeed = 0;
     [SerializeField] private float initialAcceleration = 1f;
     [SerializeField] float speedReducer = 1;
     //public CarBehavior currentTarget;
     public CarBehavior GizmoTarget;
     public bool RightOfWay = false;
-    [SerializeField] AStar pathfinder;
+    public bool AwaitingRightOfWay = false;
+    AStar pathfinder;
+    Building home;
     void Awake()
     {
         transform.Translate(new Vector3(0, YClipPrevention, 0));
         enabled = false;
     }
-    public void Setup(AStar a){
+    public void Setup(AStar a, Building h){
         pathfinder = a;
+        home = h;
         this.enabled = true;
     }
     public void setPath(PathingCell[] path , float maxSpeed = ActualMaxSpeed)
@@ -119,7 +123,7 @@ public class CarBehavior : MonoBehaviour
                         if (!cc[i].Equals(this))
                         {
                             if(RightOfWay){
-                                if(cc[i].RightOfWay){
+                                if(!cc[i].AwaitingRightOfWay || cc[i].RightOfWay){
                                     finder = cc[i];
                                     break;
                                 }
@@ -145,7 +149,7 @@ public class CarBehavior : MonoBehaviour
                         if (!ccN[i].Equals(this))
                         {
                             if(RightOfWay){
-                                if(ccN[i].RightOfWay){
+                                if(!ccN[i].AwaitingRightOfWay || ccN[i].RightOfWay){
                                     finder = ccN[i];
                                 }
                                 else{
@@ -201,13 +205,12 @@ public class CarBehavior : MonoBehaviour
             }
             Vector3 thisToTarget = target.transform.position - transform.position;
             float dotProduct = Vector3.Dot(transform.forward,thisToTarget.normalized);
+            float distance = Vector3.Distance(frontCenter, closestPoint);
             if(dotProduct < 0){
-                Debug.Log("Target is behind this car!");
                 StopBrake();
-                yield return new WaitForSeconds(.2f);
+                yield return new WaitForSeconds(.05f);
                 yield break;
             }
-            float distance = Vector3.Distance(frontCenter, closestPoint);
             //TODO
             /*var angle = Mathf.Abs(Vector3.SignedAngle(frontCenter, closestPoint,transform.position));
             Debug.Log(angle);
@@ -254,12 +257,13 @@ public class CarBehavior : MonoBehaviour
             }
             else
             {
-                if (NextCell.groupType == GroupEnum.Road)
+                if (NextCell.groupType == GroupEnum.Road || NextCell.groupType == GroupEnum.Building)
                 {
                     if (RightOfWay && Current.cell.groupType != GroupEnum.Intersection)
                     {
                         Debug.Log("Turning off Right of Way");
                         RightOfWay = false;
+                        IntersectionEntranceCell = null;
                     }
                     while (Vector3.Distance(transform.position, NextPos) > ARBITRARY_MIN_DISTANCE)
                     {
@@ -282,10 +286,13 @@ public class CarBehavior : MonoBehaviour
                         //TODO: continue if intersection
                         //yield return new WaitForSeconds(.5f);
                         NextCell.intersect.AddCarToQueue(this);
+                        IntersectionEntranceCell = Current;
                         while (!RightOfWay)
                         {
+                            AwaitingRightOfWay = true;
                             yield return null;
                         }
+                        AwaitingRightOfWay = false;
                         Debug.Log("Turning on Right of Way");
                     }
                 }
@@ -294,8 +301,7 @@ public class CarBehavior : MonoBehaviour
             t = 0;
             Current = Next;
         }
-        yield return new WaitForSeconds(2);
-        Destroy(gameObject);
+        home.CarReachedDestination(this);
 
     }
     void DriveTo(Vector3 initial, Vector3 NextPos, ref float t)

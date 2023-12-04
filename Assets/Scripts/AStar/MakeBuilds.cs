@@ -29,7 +29,7 @@ public class MakeBuilds : MonoBehaviour
     Vector3Int? destination;
     bool noDoubleOps = false;
     bool inProgress = false;
-    int cState = 0;
+    public int cState = 0;
     [SerializeField] GameObject carFab;
     [SerializeField] GameObject PossibleChoiceFab;
     [SerializeField] GameObject homeFab;

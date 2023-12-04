@@ -17,6 +17,7 @@ public class AStar : MonoBehaviour
 
     List<string> workingAStar = new List<string>();
     Dictionary<string, PathingCell[]> finishedPaths = new Dictionary<string, PathingCell[]>();
+    public static readonly PathingCell[] NoPathIndicator = new PathingCell[1]{new PathingCell(null)};
     public Vector3Int[] CellPath = null;
     /*
         [SerializeField] Vector3Int DebugStart;
@@ -134,6 +135,8 @@ public class AStar : MonoBehaviour
             yield return null;
         }
         Debug.LogError("Path not found!");
+        string key = VectorsToKeys(start, finish);
+        finishedPaths.Add(key, NoPathIndicator);
         yield break;
     }
     public IEnumerator AStarCells(Vector3Int start, Vector3Int finish)

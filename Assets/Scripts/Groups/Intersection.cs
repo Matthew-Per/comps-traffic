@@ -26,7 +26,7 @@ public class Intersection : MonoBehaviour
     private int west { get { return edges[3]; } set { edges[3] = value; } }
     HashSet<Vector3Int> cellPoses = new HashSet<Vector3Int>();
     public float Cost { get; protected set; }
-    [field:SerializeField]public List<Cell> cells { get; protected set; } = new List<Cell>();
+    [field: SerializeField] public List<Cell> cells { get; protected set; } = new List<Cell>();
     public List<Cell> endCells { get; protected set; } = new List<Cell>();
     [SerializeField] private List<Vector3Int> unfinishedCells;
     public List<Vector3Int> CellsUnfinished { get { return unfinishedCells; } private set { unfinishedCells = value; } }
@@ -38,8 +38,8 @@ public class Intersection : MonoBehaviour
     public GroupSpecialization specialization { get; set; }
     Vector3 Center;
     BoxCollider Trigger;
-    List<CarBehavior> AwaitingCars = new List<CarBehavior>();
-    List<CarBehavior> currentCars = new List<CarBehavior>();
+    [SerializeField] List<CarBehavior> AwaitingCars = new List<CarBehavior>();
+    [SerializeField] List<CarBehavior> currentCars = new List<CarBehavior>();
     void Awake()
     {
         enabled = false;
@@ -254,10 +254,14 @@ public class Intersection : MonoBehaviour
     }
     void CarLogic()
     {
+        currentCars.RemoveAll(item => item == null);
         switch (specialization)
         {
             case GroupSpecialization.Stop:
                 StopLogic();
+                break;
+            case GroupSpecialization.Yield:
+                YieldLogic();
                 break;
 
         }
@@ -274,6 +278,47 @@ public class Intersection : MonoBehaviour
                 AwaitingCars.Remove(nextCar);
             }
         }
+    }
+    void YieldLogic()
+    {
+        if (AwaitingCars.Count > 0)
+        {
+            if (currentCars.Count == 0)
+            {
+                var nextCar = AwaitingCars[0];
+                currentCars.Add(nextCar);
+                nextCar.RightOfWay = true;
+                AwaitingCars.Remove(nextCar);
+            }
+            else
+            {
+                var AwaitingCarsSnapshot = AwaitingCars.ToArray();
+                var CurrentCarsSnapshot = currentCars.ToArray();
+                foreach (var potential in AwaitingCarsSnapshot)
+                {
+                    if (CheckCarsRightOfWay(potential, CurrentCarsSnapshot))
+                    {
+                        currentCars.Add(potential);
+                        potential.RightOfWay = true;
+                        AwaitingCars.Remove(potential);
+                    }
+                }
+            }
+        }
+    }
+    bool CheckCarsRightOfWay(CarBehavior behind, CarBehavior[] forwardCars)
+    {
+        bool noOpposers = true;
+        foreach (var forward in forwardCars)
+        {
+            //if a car ahead entered the intersection through a direction differing from the current car
+            if (forward.IntersectionEntranceCell != null &&
+                !behind.IntersectionEntranceCell.NextDirection.Equals(forward.IntersectionEntranceCell.NextDirection))
+            {
+                noOpposers = false;
+            }
+        }
+        return noOpposers;
     }
     void OnDrawGizmosSelected()
     {
