@@ -16,6 +16,7 @@ public enum GroupSpecialization
     Yield,
     Stop,
     Light,
+    Continue
 }
 public class Intersection : MonoBehaviour
 {
@@ -35,16 +36,20 @@ public class Intersection : MonoBehaviour
     Transform theI;
     [SerializeField] GameObject intersectIndicFab;
     public GroupEnum type { get; private set; }
-    public GroupSpecialization specialization { get; set; }
+    [field:SerializeField] public GroupSpecialization specialization { get; set; }
     Vector3 Center;
     BoxCollider Trigger;
     [SerializeField] List<CarBehavior> AwaitingCars = new List<CarBehavior>();
     [SerializeField] List<CarBehavior> currentCars = new List<CarBehavior>();
+    Dictionary<Cell, Direction> Inbounds = new Dictionary<Cell, Direction>();
+    public float lightTiming = 5f;
+    bool Jammed = true;
     void Awake()
     {
         enabled = false;
         theI = transform.GetChild(0);
         Trigger = GetComponent<BoxCollider>();
+        StartCoroutine(JamChecker());
     }
     public void IntersectionSetup(Cell first, Grid grid)
     {
@@ -75,6 +80,36 @@ public class Intersection : MonoBehaviour
             CarLogic();
         }
         //TODO: remove
+    }
+    IEnumerator JamChecker()
+    {
+        while (true)
+        {
+                for(int i = 0; i < cells.Count; i++)
+                {
+                    var c = cells[i];
+                    if (c.CurrentCars.Count > 1)
+                    {
+                        bool Jammed = true;
+                        foreach (CarBehavior car in c.CurrentCars)
+                        {
+                            if (!car.stopped)
+                            {
+                                Jammed = false;
+                                break;
+                            }
+                        }
+                        if (Jammed)
+                        {
+                            CarBehavior firstCar = c.CurrentCars[0];
+                            firstCar.AbsoluteRightOfWay();
+                            Debug.Log("Absolute used");
+                        }
+                    }
+                    yield return null;
+                }
+            yield return null;
+        }
     }
     private void CalculateBaseCost()
     {
@@ -155,14 +190,28 @@ public class Intersection : MonoBehaviour
         cells.Add(cell);
         var go = Instantiate(intersectIndicFab, cell.transform.position, Quaternion.identity, transform);
         cellPoses.Add(cell.CellPosition);
-
         cell.intersect = this;
-
+        CorrectInbounds(cell);
         FindEndCells(cell);
         CalculateBaseCost();
         CalculateLegality(cell.CellPosition);
         MoveCenter();
         ResizeTrigger();
+    }
+    private void CorrectInbounds(Cell newCell)
+    {
+        if (Inbounds.ContainsKey(newCell))
+        {
+            Inbounds.Remove(newCell);
+        }
+        var cellInbounds = newCell.GetInbounds();
+        foreach (var kvp in cellInbounds)
+        {
+            if (kvp.Value.groupType != GroupEnum.Intersection)
+            {
+                Inbounds.Add(kvp.Value, kvp.Key);
+            }
+        }
     }
     private void FindEndCells(Cell newCell)
     {
@@ -263,6 +312,9 @@ public class Intersection : MonoBehaviour
             case GroupSpecialization.Yield:
                 YieldLogic();
                 break;
+            case GroupSpecialization.Light:
+                LightLogic();
+                break;
 
         }
     }
@@ -306,6 +358,54 @@ public class Intersection : MonoBehaviour
             }
         }
     }
+    float elapsedTime = 0;
+    int lightCycle = 0;
+    [SerializeField] Direction currentLight = null;
+    List<Direction> lights = new List<Direction>();
+    bool changeLights = true;
+    void LightLogic()
+    {
+        if (changeLights)
+        {
+            foreach (var kvp in Inbounds)
+            {
+                if (!lights.Contains(kvp.Value))
+                    lights.Add(kvp.Value);
+            }
+            currentLight = lights[lightCycle];
+            lightCycle++;
+            if (lightCycle >= lights.Count)
+            {
+                lightCycle = 0;
+            }
+            changeLights = false;
+        }
+        if (AwaitingCars.Count > 0)
+        {
+            for (int i = 0; i < AwaitingCars.Count;)
+            {
+                var possible = AwaitingCars[i];
+                if (possible.IntersectionEntranceCell.NextDirection.Equals(currentLight) ||
+                possible.IntersectionEntranceCell.NextDirection.Equals(currentLight.Opposite))
+                {
+                    currentCars.Add(possible);
+                    possible.RightOfWay = true;
+                    AwaitingCars.Remove(possible);
+                }
+                else
+                {
+                    i++;
+                }
+            }
+        }
+        elapsedTime += Time.deltaTime;
+        if (elapsedTime >= lightTiming)
+        {
+            elapsedTime = 0;
+            changeLights = true;
+        }
+
+    }
     bool CheckCarsRightOfWay(CarBehavior behind, CarBehavior[] forwardCars)
     {
         bool noOpposers = true;
@@ -320,6 +420,13 @@ public class Intersection : MonoBehaviour
         }
         return noOpposers;
     }
+    void AddCar(CarBehavior car)
+    {
+        currentCars.Add(car);
+        car.RightOfWay = true;
+        AwaitingCars.Remove(car);
+
+    }
     void OnDrawGizmosSelected()
     {
         /*Gizmos.color = Color.white;
@@ -330,6 +437,11 @@ public class Intersection : MonoBehaviour
         foreach (Cell cell in endCells)
         {
             Gizmos.DrawWireCube(cell.transform.position, grid.cellSize);
+        }
+        Gizmos.color = Color.gray;
+        foreach (var kvp in Inbounds)
+        {
+            Gizmos.DrawWireCube(kvp.Key.transform.position, grid.cellSize);
         }
     }
 }

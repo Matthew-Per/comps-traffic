@@ -18,21 +18,25 @@ public class Building : MonoBehaviour
     PathingCell[] currentPath;
     PathingCell[] currentReturn;
     [SerializeField] GameObject carP;
+    public GameObject destinationObject;
+    Destination destScript;
     // Start is called before the first frame update
     void Start()
     {
+        destScript = destinationObject.GetComponent<Destination>();
         StartCoroutine(SpawnCars());
         StartCoroutine(SpawnCarToHome());
         StartCoroutine(Pathfinding());
         StartCoroutine(reversePathfinding());
     }
-    public void Setup(AStar a, Cell s, Cell d)
+    public void Setup(AStar a, Cell s, Cell d, GameObject destOb)
     {
         this.pathfinder = a;
         home = s;
         home.build = this;
         dest = d;
         dest.build = this;
+        destinationObject = destOb;
         enabled = true;
     }
 
@@ -72,7 +76,8 @@ public class Building : MonoBehaviour
             }
             PathingCell StartCell = currentReturn[0];
             //TODO: destination occupying
-            if (WantToReturn > 0)
+            bool destOccupy = destScript.occupied;
+            if (!destOccupy && WantToReturn > 0)
             {
                 yield return new WaitForSeconds(delay);
                 GameObject c = Instantiate(carP, StartCell.pos, Quaternion.identity);
@@ -156,6 +161,7 @@ public class Building : MonoBehaviour
         else if (destinationCell.Equals(dest))
         {
             WantToReturn++;
+            destScript.occupied = false;
         }
         else
         {

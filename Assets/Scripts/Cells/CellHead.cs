@@ -48,7 +48,7 @@ public class CellHead : MonoBehaviour
     /// <param name="build"></param>
     /// <returns></returns>
     /// <exception cref="Exception"></exception>
-    public void CreateBuiding(Vector3Int start, Vector3Int end, Direction startExit, Direction startEntrance, Direction endEntrance, Direction endExit, Building build, AStar a){
+    public void CreateBuiding(Vector3Int start, Vector3Int end, Direction startExit, Direction startEntrance, Direction endEntrance, Direction endExit, Building build, AStar a, GameObject destObj){
         if(hasCell(start) || hasCell(end)){
             throw new InvalidOperationException("Cannot overwrite cells with houses");
         }
@@ -76,7 +76,7 @@ public class CellHead : MonoBehaviour
         DENC.addOutboundRoad(endEntrance,dest);
         dest.addInboundRoad(endEntrance,DENC);
         DEXC.addInboundRoad(endExit.Opposite,dest);
-        build.Setup(a,home,dest);
+        build.Setup(a,home,dest,destObj);
         if(HENC.Intersection) groupLead.UpdateIntersection(HENC);
         if(HEXC.Intersection) groupLead.UpdateIntersection(HEXC);
         if(DENC.Intersection) groupLead.UpdateIntersection(DENC);

@@ -95,6 +95,7 @@ GameObject:
   - component: {fileID: 172265048331959663}
   - component: {fileID: 4310763980998443742}
   - component: {fileID: 8620258522321413418}
+  - component: {fileID: 4734748460920088084}
   m_Layer: 0
   m_Name: Building-Dest
   m_TagString: Untagged
@@ -190,6 +191,19 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 2.5, y: 0.5, z: 2.5}
   m_Center: {x: 0, y: -0.25, z: 0}
+--- !u!114 &4734748460920088084
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3657341671392140995}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba8dfc094597e7d4288d016058b3c879, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  occupied: 0
 --- !u!1 &5674637317576553972
 GameObject:
   m_ObjectHideFlags: 0

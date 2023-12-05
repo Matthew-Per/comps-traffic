@@ -23,12 +23,12 @@ public class UserModeSelect : MonoBehaviour
     Material[] materials;
     bool pathState = false;
     bool roadState = true;
-    bool selectState = false;
+    bool tuneState = false;
     UserMode prevMode;
     public void setToRoad()
     {
         pathState = false;
-        selectState = false;
+        tuneState = false;
         roadState = true;
         selector.GetComponent<Renderer>().material = materials[0];
         prevMode = UserMode.Road;
@@ -44,7 +44,7 @@ public class UserModeSelect : MonoBehaviour
     {
         pathState = true;
         roadState = false;
-        selectState = false;
+        tuneState = false;
         prevMode = UserMode.Path;
         selector.GetComponent<Renderer>().material = materials[1];
         if (mode != UserMode.UI)
@@ -54,6 +54,9 @@ public class UserModeSelect : MonoBehaviour
             pathDirector.SetActive(pathState);
         }
 
+    }
+    public void setToTune(){
+        
     }
     public void OnUIHover()
     {

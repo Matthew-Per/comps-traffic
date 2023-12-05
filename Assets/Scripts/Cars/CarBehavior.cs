@@ -8,10 +8,11 @@ using System.Linq;
 using System.Security.Cryptography;
 using Unity.VisualScripting;
 using Unity.VisualScripting.FullSerializer;
+using UnityEngine.Video;
 
 public class CarBehavior : MonoBehaviour
 {
-    [field:SerializeField]
+    [field: SerializeField]
     PathingCell[] path = null;
     const float ARBITRARY_MIN_DISTANCE = 0.35f;
     const float ActualMaxSpeed = 1f;
@@ -22,6 +23,7 @@ public class CarBehavior : MonoBehaviour
     const float absoulteStop = .25f;
     [SerializeField] bool brake = false;
     [SerializeField] bool eBrake = false;
+    public bool stopped = false;
     public float RotationSpeed;
     int currentI = 0;
     public PathingCell Current;
@@ -31,24 +33,38 @@ public class CarBehavior : MonoBehaviour
     [SerializeField] private float initialAcceleration = 1f;
     [SerializeField] float speedReducer = 1;
     //public CarBehavior currentTarget;
-    public CarBehavior GizmoTarget;
+    public CarBehavior currentTarget;
+    public CarBehavior currentIgnore = null;
     public bool RightOfWay = false;
     public bool AwaitingRightOfWay = false;
+    public bool OutsideOverride { get; set; } = false;
+
     AStar pathfinder;
     Building home;
+
+    Transform body;
+    Renderer bodyRend;
+    bool redTicking = false;
+    Coroutine GlowingRed;
+    public const float RED_DELAY = 3f;
+    Coroutine CurrentBrake = null;
     void Awake()
     {
+        body = transform.GetChild(0);
+        bodyRend = body.GetComponent<Renderer>();
         transform.Translate(new Vector3(0, YClipPrevention, 0));
         enabled = false;
     }
-    public void Setup(AStar a, Building h){
+    public void Setup(AStar a, Building h)
+    {
         pathfinder = a;
         home = h;
         this.enabled = true;
     }
-    public void setPath(PathingCell[] path , float maxSpeed = ActualMaxSpeed)
+    public void setPath(PathingCell[] path, float maxSpeed = ActualMaxSpeed)
     {
-        if(enabled == false){
+        if (enabled == false)
+        {
             throw new Exception("Car needs AStar to pathfind autonomously!");
         }
         MaxSpeed = maxSpeed;
@@ -57,20 +73,23 @@ public class CarBehavior : MonoBehaviour
         StartCoroutine(TargetSearch());
         //.25seconds is average human reaction
     }
-    public IEnumerator setTarget(Vector3Int start,Vector3Int target, float maxSpeed = ActualMaxSpeed){
-        if(enabled == false){
+    public IEnumerator setTarget(Vector3Int start, Vector3Int target, float maxSpeed = ActualMaxSpeed)
+    {
+        if (enabled == false)
+        {
             throw new Exception("Car needs AStar to pathfind autonomously!");
         }
         PathingCell[] constructedPath = null;
-        while(constructedPath == null){
-            constructedPath = pathfinder.CompleteCoAstar(start,target);
+        while (constructedPath == null)
+        {
+            constructedPath = pathfinder.CompleteCoAstar(start, target);
             yield return null;
         }
         MaxSpeed = maxSpeed;
         this.path = constructedPath;
         StartCoroutine(Go());
         StartCoroutine(TargetSearch());
-        
+
     }    /*
     void OnTriggerEnter(Collider collider)
     {
@@ -108,10 +127,9 @@ public class CarBehavior : MonoBehaviour
     */
     IEnumerator TargetSearch()
     {
-        Coroutine CurrentBrake = null;
         while (true)
         {
-            if (!brake)
+            if (!brake && !OutsideOverride)
             {
                 CarBehavior finder = null;
                 var cc = Current.cell.CurrentCars;//should be current cell
@@ -122,21 +140,31 @@ public class CarBehavior : MonoBehaviour
                     {
                         if (!cc[i].Equals(this))
                         {
-                            if(RightOfWay){
-                                if(!cc[i].AwaitingRightOfWay || cc[i].RightOfWay){
-                                    finder = cc[i];
+                            if (RightOfWay)
+                            {
+                                if (!cc[i].AwaitingRightOfWay || cc[i].RightOfWay)
+                                {
+                                    if (!cc[i].Equals(currentIgnore))
+                                    {
+                                        finder = cc[i];
+                                    }
                                     break;
                                 }
-                                else{
+                                else
+                                {
                                     //keep going if in intersection and other car is not in intersection
                                 }
                             }
-                            else{
-                                finder = cc[i];
-                                break;
+                            else
+                            {
+                                if (!cc[i].Equals(currentIgnore))
+                                {
+                                    finder = cc[i];
+                                    break;
+                                }
                             }
                             //Debug.Log("Found target within cell");
-                            
+
                         }
                     }
 
@@ -148,25 +176,36 @@ public class CarBehavior : MonoBehaviour
                     {
                         if (!ccN[i].Equals(this))
                         {
-                            if(RightOfWay){
-                                if(!ccN[i].AwaitingRightOfWay || ccN[i].RightOfWay){
-                                    finder = ccN[i];
+                            if (RightOfWay)
+                            {
+                                if (!ccN[i].AwaitingRightOfWay || ccN[i].RightOfWay)
+                                {
+                                    if (!ccN[i].Equals(currentIgnore))
+                                    {
+                                        finder = ccN[i];
+                                        break;
+                                    }
                                 }
-                                else{
+                                else
+                                {
                                     //see previous if
                                 }
                             }
-                            else{
-                            finder = ccN[i];
+                            else
+                            {
+                                if (!ccN[i].Equals(currentIgnore))
+                                {
+                                    finder = ccN[i];
+                                    break;
+                                }
                             }
                             //Debug.Log("Found target within next cell");
-                            break;
                         }
                     }
                 }
                 if (finder != null)
                 {
-                    GizmoTarget = finder;
+                    currentTarget = finder;
                     CurrentBrake = StartCoroutine(CrashPrevention(finder));
                     //Debug.Log("Starting Braking");
                 }
@@ -176,13 +215,23 @@ public class CarBehavior : MonoBehaviour
     }
     Vector3 frontCenter;
     Vector3 closestPoint;
-    void StopBrake(){
-                speedReducer = 1;
-                brake = false;
-                GizmoTarget = null;
+    void StopBrake()
+    {
+        speedReducer = 1;
+        brake = false;
+        currentTarget = null;
+        NoMoreRed();
+    }
+    public void AbsoluteRightOfWay()
+    {
+        RightOfWay = true;
+        StopCoroutine(CurrentBrake);
+        StopBrake();
+        OutsideOverride = true;
     }
     IEnumerator CrashPrevention(CarBehavior target)
     {
+        currentIgnore = null;
         brake = true;
         BoxCollider otherBoxCollider = null;
         while (true)
@@ -204,11 +253,19 @@ public class CarBehavior : MonoBehaviour
                 yield break;
             }
             Vector3 thisToTarget = target.transform.position - transform.position;
-            float dotProduct = Vector3.Dot(transform.forward,thisToTarget.normalized);
+            float dotProduct = Vector3.Dot(transform.forward, thisToTarget.normalized);
             float distance = Vector3.Distance(frontCenter, closestPoint);
-            if(dotProduct < 0){
+            if (dotProduct < 0)
+            {
                 StopBrake();
-                yield return new WaitForSeconds(.05f);
+                currentIgnore = target;
+                yield break;
+            }
+            //if they are targetting each other
+            if (currentTarget.currentTarget != null && currentTarget.currentTarget.Equals(this))
+            {
+                StopBrake();
+                currentIgnore = target;
                 yield break;
             }
             //TODO
@@ -227,13 +284,37 @@ public class CarBehavior : MonoBehaviour
             if (distance <= absoulteStop)
             {
                 speedReducer = 0;
+                stopped = true;
             }
             else
             {
+                stopped = false;
                 speedReducer = 1 - (distance / DriverViewDist);
+            }
+            if (!redTicking && Mathf.Approximately(speedReducer, 0))
+            {
+                GlowingRed = StartCoroutine(GetRed());
+                redTicking = true;
+            }
+            else if (redTicking && !Mathf.Approximately(speedReducer, 0))
+            {
+                NoMoreRed();
             }
             yield return null;
         }
+    }
+    IEnumerator GetRed()
+    {
+        yield return new WaitForSeconds(RED_DELAY);
+        bodyRend.material.color = Color.red;
+    }
+    void NoMoreRed()
+    {
+        if(GlowingRed != null){
+            StopCoroutine(GlowingRed);
+        }
+        redTicking = false;
+        bodyRend.material.color = Color.white;
     }
     IEnumerator Go()
     {
@@ -249,11 +330,11 @@ public class CarBehavior : MonoBehaviour
             Vector3 init = transform.position;
             if (CurrentCell.groupType == GroupEnum.Intersection)
             {
-                    while (RightOfWay && Vector3.Distance(transform.position, NextPos) > ARBITRARY_MIN_DISTANCE)
-                    {
-                        DriveTo(init, NextPos, ref t);
-                        yield return null;
-                    }
+                while (RightOfWay && Vector3.Distance(transform.position, NextPos) > ARBITRARY_MIN_DISTANCE)
+                {
+                    DriveTo(init, NextPos, ref t);
+                    yield return null;
+                }
             }
             else
             {
@@ -262,8 +343,8 @@ public class CarBehavior : MonoBehaviour
                     if (RightOfWay && Current.cell.groupType != GroupEnum.Intersection)
                     {
                         Debug.Log("Turning off Right of Way");
-                        RightOfWay = false;
-                        IntersectionEntranceCell = null;
+                        TurnOutofIntersection();
+
                     }
                     while (Vector3.Distance(transform.position, NextPos) > ARBITRARY_MIN_DISTANCE)
                     {
@@ -303,6 +384,12 @@ public class CarBehavior : MonoBehaviour
         }
         home.CarReachedDestination(this);
 
+    }
+    void TurnOutofIntersection()
+    {
+        RightOfWay = false;
+        IntersectionEntranceCell = null;
+        OutsideOverride = false;
     }
     void DriveTo(Vector3 initial, Vector3 NextPos, ref float t)
     {

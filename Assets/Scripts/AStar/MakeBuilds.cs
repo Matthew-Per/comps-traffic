@@ -275,7 +275,7 @@ public class MakeBuilds : MonoBehaviour
         {
             //return logic
             Building build = home.GetComponent<Building>();
-            cellLead.CreateBuiding(homeVec, DestVec, homeExitDirection, homeEntrance, destEntrance, destExitDirection, build, aStar);
+            cellLead.CreateBuiding(homeVec, DestVec, homeExitDirection, homeEntrance, destEntrance, destExitDirection, build, aStar,Dest);
             //build.Setup(aStar,)
             cState = 0;
             inProgress = false;
