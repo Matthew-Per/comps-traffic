@@ -142,7 +142,14 @@ public class CarBehavior : MonoBehaviour
                         {
                             if (RightOfWay)
                             {
-                                if (!cc[i].AwaitingRightOfWay || cc[i].RightOfWay)
+                                if(!cc[i].AwaitingRightOfWay && !cc[i].RightOfWay){
+                                    if (!cc[i].Equals(currentIgnore))
+                                    {
+                                        finder = cc[i];
+                                    }
+                                    break;
+                                }
+                                else if (!cc[i].AwaitingRightOfWay || cc[i].RightOfWay)
                                 {
                                     if (!cc[i].Equals(currentIgnore))
                                     {
